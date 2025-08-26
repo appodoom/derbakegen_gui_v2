@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Derbake generator</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="title">Derbake generator v2.0</div>
+    <div class="main_content" id="main_content"></div>
+    <button id="go_back">Go back to the beginning</button>
+    <!-- Page 0 Template -->
+    <template id="page-0">
+      <span class="main_content_title">General settings</span>
+      <div class="main_content_inputs">
+        <div class="inputs_container">
+          <div class="step_1_input">
+            <span>How many cycles in the output?</span>
+            <input type="text" placeholder="Eg: 20" name="numOfCycles" />
+          </div>
+          <div class="step_1_input">
+            <span>In BPM, what is the tempo of the output?</span>
+            <input type="text" placeholder="50-150" name="tempo" />
+          </div>
+          <div class="step_1_input">
+            <span>In beats, what is the cycle length?</span>
+            <input type="text" placeholder="Eg: 6" name="cycleLength" />
+          </div>
+          <div class="step_1_input">
+            <span>What is the maximum subdivision of a beat?</span>
+            <input type="text" placeholder="Eg: 4" name="maxSubd" />
+          </div>
+          <div class="step_1_input">
+            <span
+              >What is the standard deviation of wrong beat placements?</span
+            >
+            <input type="text" placeholder="Eg: 1" name="std" />
+          </div>
+          <div class="step_1_input">
+            <span
+              >In BPM, what is the maximum value the tempo can vary by?</span
+            >
+            <input type="text" placeholder="Eg: 3" name="tempoVariation" />
+          </div>
+        </div>
+      </div>
+      <button class="main_content_submit" id="next-btn">Next</button>
+    </template>
+
+    <!-- Page 1 Template -->
+    <template id="page-1">
+      <span class="main_content_title">Variation percentages</span>
+      <div class="main_content_inputs">
+        <div class="matrix_container">
+          <div id="matrix"></div>
+        </div>
+      </div>
+      <button class="main_content_submit" id="next-btn">Next</button>
+    </template>
+
+    <script src="navigation.js"></script>
+  </body>
+</html>
