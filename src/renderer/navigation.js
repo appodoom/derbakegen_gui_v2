@@ -73,6 +73,11 @@ function renderPage(pageId) {
     generateMatrix(maxSubd);
   }
 
+  if (pageId === 2) {
+    const numb_beats = localStorage.getItem("cycleLength");
+    page2script(numb_beats);
+  }
+
   document.getElementById("next-btn").addEventListener("click", () => {
     switch (pageId) {
       case 0:
@@ -125,7 +130,7 @@ function renderPage(pageId) {
       default:
         break;
     }
-    const nextPage = (pageId + 1) % 2;
+    const nextPage = (pageId + 1) % 3;
     localStorage.setItem("currPage", nextPage);
     renderPage(nextPage);
   });
@@ -179,3 +184,171 @@ document.getElementById("go_back").addEventListener("click", () => {
   let currPage = Number(localStorage.getItem("currPage")) || 0;
   renderPage(currPage);
 })();
+
+function page2script(nBeats) {
+  const canvas = document.getElementById("circle");
+  const ctx = canvas.getContext("2d");
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const radius = 150;
+
+  let markers = [];
+  let hoverBeat = null;
+  let selectedSound = "doom";
+
+  // sound options
+  const sounds = [
+    "Doom",
+    "Open Tak",
+    "Open Tik",
+    "Tik1",
+    "Tik2",
+    "Ra2",
+    "Pa2",
+    "Silence",
+  ];
+  const colors = {
+    Doom: "#e74c3c",
+    "Open Tak": "#3498db",
+    "Open Tik": "#9b59b6",
+    Tik1: "#2ecc71",
+    Tik2: "#f1c40f",
+    Ra2: "#e67e22",
+    Pa2: "#1abc9c",
+    Silence: "#95a5a6",
+  };
+
+  // Create sound buttons
+  const soundButtonsContainer = document.getElementById("sound-buttons");
+  sounds.forEach((sound) => {
+    const button = document.createElement("button");
+    button.className = "sound-btn";
+    button.innerHTML = `
+            <div class="color-indicator" style="background-color: ${colors[sound]}"></div>
+            ${sound}
+          `;
+    button.addEventListener("click", () => {
+      selectedSound = sound;
+      document.getElementById("currentSound").textContent = sound;
+
+      // Update active state
+      document.querySelectorAll(".sound-btn").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+      button.classList.add("active");
+    });
+    soundButtonsContainer.appendChild(button);
+  });
+
+  // Set the first button as active initially
+  document.querySelector(".sound-btn").classList.add("active");
+
+  function angleToBeat(angle) {
+    if (angle < 0) angle += 2 * Math.PI;
+    // Change to counter-clockwise by subtracting from 2π
+    let beat = ((2 * Math.PI - angle) / (2 * Math.PI)) * nBeats;
+    const snapEnabled = document.getElementById("snapCheckbox").checked;
+    if (snapEnabled) beat = Math.round(beat * 4) / 4; // nearest 0.25
+    return beat;
+  }
+
+  // Convert beat to angle for drawing (counter-clockwise)
+  function beatToAngle(beat) {
+    // Counter-clockwise: 2π minus the clockwise angle
+    return 2 * Math.PI - (beat / nBeats) * 2 * Math.PI;
+  }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // draw circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "#34495e";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // draw beat ticks
+    ctx.lineWidth = 1;
+    for (let i = 0; i < nBeats * 2; i++) {
+      const angle = beatToAngle(i / 2) - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      ctx.moveTo(x, y);
+      ctx.beginPath();
+
+      if (i % 2 === 0) {
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+      } else {
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+      }
+      ctx.strokeStyle = i % 2 === 0 ? "#2c3e50" : "red"; // Emphasize every 4th beat
+      ctx.stroke();
+    }
+
+    // draw markers
+    markers.forEach((m) => {
+      const angle = beatToAngle(m.beat) - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = colors[m.sound] || "red";
+      ctx.fill();
+      ctx.strokeStyle = "#2c3e50";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+
+    // draw hover
+    if (hoverBeat !== null) {
+      const angle = beatToAngle(hoverBeat) - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = "rgba(52, 152, 219, 0.3)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(52, 152, 219, 0.7)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+
+  // mouse events
+  canvas.addEventListener("mousemove", (e) => {
+    const tooltip = document.getElementById("tooltip");
+    const rect = canvas.getBoundingClientRect();
+
+    // Position tooltip relative to the canvas
+    tooltip.style.left = rect.left + e.offsetX + 15 + "px";
+    tooltip.style.top = rect.top + e.offsetY + 15 + "px";
+
+    const x = e.offsetX - cx;
+    const y = e.offsetY - cy;
+    const angle = Math.atan2(y, x) + Math.PI / 2; // shift bottom=0
+    hoverBeat = angleToBeat(angle);
+
+    tooltip.textContent = "Beat: " + hoverBeat.toFixed(2);
+    tooltip.style.display = "block";
+
+    draw();
+  });
+
+  canvas.addEventListener("mouseleave", () => {
+    hoverBeat = null;
+    document.getElementById("tooltip").style.display = "none";
+    draw();
+  });
+
+  canvas.addEventListener("click", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+    const angle = Math.atan2(y, x) + Math.PI / 2; // shift bottom=0
+    let beat = angleToBeat(angle);
+
+    markers.push({ beat, sound: selectedSound });
+    draw();
+  });
+  draw();
+}

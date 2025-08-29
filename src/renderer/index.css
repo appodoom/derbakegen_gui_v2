@@ -50,7 +50,7 @@ body {
 
 .main_content_inputs {
   padding-inline: 20px;
-  padding-block: 52px;
+  padding-block: 20px;
   border-radius: 5px;
   min-width: 630px;
 }
@@ -127,4 +127,92 @@ body {
   text-decoration-color: blue;
   padding: 0;
   cursor: pointer;
+}
+
+.container {
+  display: flex;
+  gap: 10px;
+  max-width: 900px;
+  width: 100%;
+}
+.main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.editor-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+canvas {
+  border: 2px solid #34495e;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+#controls {
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+label {
+  display: block;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+.sounds-panel {
+  padding: 20px;
+  border-radius: 8px;
+}
+.sounds-panel h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+.sound-btn {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 6px;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  text-align: left;
+}
+.sound-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.sound-btn.active {
+  box-shadow: 0 0 0 2px #3498db;
+}
+.color-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.current-selection {
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+#tooltip {
+  position: absolute;
+  background: #2c3e50;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  pointer-events: none; /* so it won’t block mouse */
+  display: none; /* hidden by default */
 }

@@ -96,3 +96,5 @@ out/
 *__pycache__*
 
 *.exe
+
+src/python/dist

@@ -60,6 +60,32 @@
       </div>
       <button class="main_content_submit" id="next-btn">Next</button>
     </template>
+    <template id="page-2">
+      <span class="main_content_title">Skeleton building</span>
+      <div class="main_content_inputs">
+        <div class="container" data-nb="{{number_of_beats}}">
+          <div class="editor-container">
+            <div id="controls">
+              <input type="checkbox" id="snapCheckbox" checked />
+              Snap to nearest 0.25 beat
+            </div>
+            <div class="main">
+              <canvas id="circle" width="400" height="400"></canvas>
+              <div class="sounds-panel">
+                <div id="sound-buttons">
+                  <!-- Sound buttons will be generated here -->
+                </div>
+              </div>
+            </div>
+            <div class="current-selection">
+              Current selection: <span id="currentSound">Doom</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="main_content_submit" id="next-btn">Next</button>
+    </template>
+    <div id="tooltip"></div>
     <div id="toast-container"></div>
     <script src="navigation.js"></script>
   </body>
