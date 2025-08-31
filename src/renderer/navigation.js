@@ -158,6 +158,18 @@ function generateMatrix(nb_cols) {
     container.appendChild(div);
   }
 
+  const label = document.createElement("div");
+  label.className = "row-label";
+  label.textContent = "Percentages";
+  container.appendChild(label);
+
+  for (let c = 0; c < cols; c++) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.classList.add("step_2_input");
+    container.appendChild(input);
+  }
+
   // Rows with inputs
   for (let r = 0; r < rows; r++) {
     const label = document.createElement("div");
@@ -194,7 +206,7 @@ function page2script(nBeats) {
 
   let markers = [];
   let hoverBeat = null;
-  let selectedSound = "doom";
+  let selectedSound = "Doom";
 
   // sound options
   const sounds = [
@@ -249,7 +261,7 @@ function page2script(nBeats) {
     let beat = ((2 * Math.PI - angle) / (2 * Math.PI)) * nBeats;
     const snapEnabled = document.getElementById("snapCheckbox").checked;
     if (snapEnabled) beat = Math.round(beat * 4) / 4; // nearest 0.25
-    return beat;
+    return beat == nBeats ? 0 : beat;
   }
 
   // Convert beat to angle for drawing (counter-clockwise)
@@ -281,7 +293,7 @@ function page2script(nBeats) {
       } else {
         ctx.arc(x, y, 3, 0, 2 * Math.PI);
       }
-      ctx.strokeStyle = i % 2 === 0 ? "#2c3e50" : "red"; // Emphasize every 4th beat
+      ctx.strokeStyle = i % 2 === 0 ? "#2c3e50" : "red";
       ctx.stroke();
     }
 
@@ -344,11 +356,109 @@ function page2script(nBeats) {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left - cx;
     const y = e.clientY - rect.top - cy;
-    const angle = Math.atan2(y, x) + Math.PI / 2; // shift bottom=0
+    const angle = Math.atan2(y, x) + Math.PI / 2;
     let beat = angleToBeat(angle);
-
+    for (let i = 0; i < markers.length; i++) {
+      if (markers[i].beat === beat) {
+        markers.splice(i, 1);
+        break;
+      }
+    }
     markers.push({ beat, sound: selectedSound });
     draw();
   });
-  draw();
+
+  const map = {
+    Doom: "../sounds/doum.wav",
+    "Open Tak": "../sounds/open_tak.wav",
+    "Open Tik": "../sounds/open_tik.wav",
+    Tik1: "../sounds/tik1.wav",
+    Tik2: "../sounds/tik2.wav",
+    Ra2: "../sounds/ra.wav",
+    Pa2: "../sounds/pa2.wav",
+  };
+
+  let buffers = {};
+
+  // preload all buffers
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const loadAudioFile = async (url) => {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    return arrayBuffer;
+  };
+  const decodeAudioData = async (arrayBuffer) => {
+    try {
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      return audioBuffer;
+    } catch (e) {
+      console.error("Error decoding audio data:", e);
+      return null;
+    }
+  };
+  async function loadWavBuffer(filePath) {
+    const arrayBuffer = await loadAudioFile(filePath);
+    if (arrayBuffer) {
+      const audioBuffer = await decodeAudioData(arrayBuffer);
+      return audioBuffer;
+    }
+    return null;
+  }
+  async function loadAllBuffers(buffers) {
+    for (const key in map) {
+      const buffer = await loadWavBuffer(map[key]);
+      if (buffer) {
+        buffers[key] = buffer;
+      }
+    }
+  }
+  stopLoop = null;
+  document
+    .getElementById("playSkeleton")
+    .addEventListener("click", async (e) => {
+      if (!stopLoop) {
+        if (Object.keys(buffers).length !== Object.keys(map).length) return;
+
+        const bpm = Number(localStorage.getItem("tempo"));
+        const cycleLength = Number(localStorage.getItem("cycleLength"));
+        stopLoop = await playAudio(bpm, cycleLength, buffers);
+        e.target.textContent = "Stop";
+      } else {
+        clearInterval(stopLoop);
+        stopLoop = null;
+        e.target.textContent = "Play";
+      }
+    });
+  loadAllBuffers(buffers);
+  //todo
+  async function playAudio(bpm, cycleLength, buffers) {
+    const beatLength = 60 / bpm; // seconds per beat (not ms)
+    const cycleDuration = cycleLength * beatLength;
+    const startTime = audioCtx.currentTime;
+
+    function scheduleCycle(cycleStart) {
+      for (const hit of markers) {
+        const sound = buffers[hit.sound];
+        if (!sound) continue;
+
+        // offset in seconds
+        const timeOffset = hit.beat * beatLength;
+        const playTime = cycleStart + timeOffset;
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = sound;
+        source.connect(audioCtx.destination);
+        source.start(playTime);
+      }
+    }
+
+    // schedule first cycle immediately
+    scheduleCycle(startTime);
+
+    // schedule repeating cycles
+    return setInterval(() => {
+      const cycleStart = audioCtx.currentTime;
+      scheduleCycle(cycleStart);
+    }, cycleDuration * 1000); // convert sec → ms
+  }
 }
