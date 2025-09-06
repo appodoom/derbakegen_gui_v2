@@ -24,17 +24,17 @@ body {
 }
 
 .main_content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   gap: 1.6rem;
   align-items: center;
   justify-content: center;
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: 2rem auto;
 }
-
 .main_content_inputs,
 .main_content_submit {
   border: 1px solid black;
@@ -121,12 +121,14 @@ body {
 #go_back {
   background-color: transparent;
   border: none;
-  margin: 20px;
+  margin-top: 20px;
+  margin-left: 20px;
   color: blue;
   text-decoration: underline;
   text-decoration-color: blue;
   padding: 0;
   cursor: pointer;
+  z-index: 99;
 }
 
 .container {
@@ -213,6 +215,63 @@ label {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 13px;
-  pointer-events: none; /* so it won’t block mouse */
-  display: none; /* hidden by default */
+  pointer-events: none;
+  display: none;
+}
+
+html {
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+
+  .step_1_input {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .step_1_input > input {
+    width: 100%;
+    max-width: 12rem;
+  }
+
+  .step_2_input {
+    width: 2.2rem;
+    height: 1.7rem;
+  }
+
+  .col-label {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+
+  .title {
+    padding-block: 1rem;
+  }
+
+  .main_content_inputs {
+    padding: 0.8rem;
+  }
+
+  .step_2_input {
+    width: 1.8rem;
+    height: 1.5rem;
+    font-size: 0.7rem;
+  }
+
+  .col-label,
+  .row-label {
+    width: 1.8rem;
+    height: 1.8rem;
+    font-size: 0.7rem;
+  }
 }

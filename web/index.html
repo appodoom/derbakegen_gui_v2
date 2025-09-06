@@ -8,8 +8,10 @@
   </head>
   <body>
     <div class="title">Derbake generator v2.0</div>
-    <div class="main_content" id="main_content"></div>
     <button id="go_back">Go back to the beginning</button>
+    <div class="main_content" id="main_content"></div>
+    <div id="toast-container"></div>
+    <button id="dummy" style="display: none"></button>
     <!-- Page 0 Template -->
     <template id="page-0">
       <span class="main_content_title">General settings</span>
@@ -48,6 +50,7 @@
         </div>
       </div>
       <button class="main_content_submit" id="next-btn">Next</button>
+      <script src="page0script.js"></script>
     </template>
 
     <!-- Page 1 Template -->
@@ -59,6 +62,7 @@
         </div>
       </div>
       <button class="main_content_submit" id="next-btn">Next</button>
+      <script src="page1script.js"></script>
     </template>
     <template id="page-2">
       <span class="main_content_title">Skeleton building</span>
@@ -85,9 +89,9 @@
         </div>
       </div>
       <button class="main_content_submit" id="next-btn">Next</button>
+      <script src="page2script.js"></script>
     </template>
     <div id="tooltip"></div>
-    <div id="toast-container"></div>
     <script src="navigation.js"></script>
   </body>
 </html>
