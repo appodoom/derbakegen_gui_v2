@@ -1,4 +1,5 @@
 export function page2script() {
+  const API_URL = "http://127.0.0.1:5000";
   const nBeats = localStorage.getItem("cycleLength");
   const canvas = document.getElementById("circle");
   const ctx = canvas.getContext("2d");
@@ -11,7 +12,29 @@ export function page2script() {
   let selectedSound = "Doom";
   let stopLoop = null;
 
-  // sound options
+  const pathsMap = {
+    Doom: "http://localhost:8080/sounds/doum.wav",
+    "Open Tak": "http://localhost:8080/sounds/open_tak.wav",
+    "Open Tik": "http://localhost:8080/sounds/open_tik.wav",
+    Tik1: "http://localhost:8080/sounds/tik1.wav",
+    Tik2: "http://localhost:8080/sounds/tik2.wav",
+    Ra2: "http://localhost:8080/sounds/ra.wav",
+    Pa2: "http://localhost:8080/sounds/pa2.wav",
+  };
+
+  const symbolMap = {
+    Doom: "D",
+    "Open Tak": "OTA",
+    "Open Tik": "OTI",
+    Tik1: "T1",
+    Tik2: "T2",
+    Ra2: "RA",
+    Pa2: "PA2",
+    Silence: "S",
+  };
+
+  let buffers = {};
+
   const sounds = [
     "Doom",
     "Open Tak",
@@ -171,18 +194,6 @@ export function page2script() {
     draw();
   });
 
-  const map = {
-    Doom: "http://localhost:8080/sounds/doum.wav",
-    "Open Tak": "http://localhost:8080/sounds/open_tak.wav",
-    "Open Tik": "http://localhost:8080/sounds/open_tik.wav",
-    Tik1: "http://localhost:8080/sounds/tik1.wav",
-    Tik2: "http://localhost:8080/sounds/tik2.wav",
-    Ra2: "http://localhost:8080/sounds/ra.wav",
-    Pa2: "http://localhost:8080/sounds/pa2.wav",
-  };
-
-  let buffers = {};
-
   // preload all buffers
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   const loadAudioFile = async (url) => {
@@ -208,8 +219,8 @@ export function page2script() {
     return null;
   }
   async function loadAllBuffers(buffers) {
-    for (const key in map) {
-      const buffer = await loadWavBuffer(map[key]);
+    for (const key in pathsMap) {
+      const buffer = await loadWavBuffer(pathsMap[key]);
       if (buffer) {
         buffers[key] = buffer;
       }
@@ -222,7 +233,8 @@ export function page2script() {
         await audioCtx.resume();
       }
       if (!stopLoop) {
-        if (Object.keys(buffers).length !== Object.keys(map).length) return;
+        if (Object.keys(buffers).length !== Object.keys(pathsMap).length)
+          return;
 
         const bpm = Number(localStorage.getItem("tempo"));
         const cycleLength = Number(localStorage.getItem("cycleLength"));
@@ -267,9 +279,26 @@ export function page2script() {
     }, cycleDuration * 1000); // convert sec → ms
   }
 
-  document.getElementById("next-btn").addEventListener("click", () => {
-    console.log(markers);
-    localStorage.setItem("currPage", 0);
+  function getSkeletonFromMarkers(markers) {
+    let sorted = markers.sort((a, b) => a.beat - b.beat);
+
+    // console.log(sorted);
+
+    let output = [];
+    let old_beat = 0;
+    for (const { beat, sound } of sorted) {
+      let new_beat = beat - old_beat;
+      output.push([new_beat, symbolMap[sound]]);
+      old_beat = beat;
+    }
+    output[0][0] = nBeats - markers[markers.length - 1].beat;
+    return output;
+  }
+
+  document.getElementById("next-btn").addEventListener("click", async () => {
+    const skeleton = getSkeletonFromMarkers(markers);
+    localStorage.setItem("skeleton", JSON.stringify(skeleton));
+    localStorage.setItem("currPage", 3);
     document.getElementById("dummy").click();
   });
 }
