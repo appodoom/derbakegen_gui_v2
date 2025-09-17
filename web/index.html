@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Derbake generator</title>
     <link rel="stylesheet" href="index.css" />
-  </head>
-  <body>
+</head>
+
+<body>
     <div class="title">Derbake generator v2.0</div>
     <button id="go_back">Go back to the beginning</button>
     <div class="main_content" id="main_content"></div>
@@ -14,88 +16,82 @@
     <button id="dummy" style="display: none"></button>
     <!-- Page 0 Template -->
     <template id="page-0">
-      <span class="main_content_title">General settings</span>
-      <div class="main_content_inputs">
-        <div class="inputs_container">
-          <div class="step_1_input">
-            <span>How many cycles in the output?</span>
-            <input type="text" placeholder="Eg: 20" name="numOfCycles" />
-          </div>
-          <div class="step_1_input">
-            <span>In BPM, what is the tempo of the output?</span>
-            <input type="text" placeholder="50-150" name="tempo" />
-          </div>
-          <div class="step_1_input">
-            <span>In beats, what is the cycle length?</span>
-            <input type="text" placeholder="Eg: 6" name="cycleLength" />
-          </div>
-          <div class="step_1_input">
-            <span>What is the maximum subdivision of a beat?</span>
-            <input type="text" placeholder="Eg: 4" name="maxSubd" />
-          </div>
-          <div class="step_1_input">
-            <span
-              >What is the standard deviation of wrong beat<br />
-              placements?</span
-            >
-            <input type="text" placeholder="Eg: 1" name="std" />
-          </div>
-          <div class="step_1_input">
-            <span
-              >In BPM, what is the maximum value the tempo can <br />
-              vary by?</span
-            >
-            <input type="text" placeholder="Eg: 3" name="tempoVariation" />
-          </div>
+        <span class="main_content_title">General settings</span>
+        <div class="main_content_inputs">
+            <div class="inputs_container">
+                <div class="step_1_input">
+                    <span>How many cycles in the output?</span>
+                    <input type="text" name="numOfCycles" />
+                </div>
+                <div class="step_1_input">
+                    <span>In BPM, what is the tempo of the output?</span>
+                    <input type="text" name="tempo" />
+                </div>
+                <div class="step_1_input">
+                    <span>In beats, what is the cycle length?</span>
+                    <input type="text" name="cycleLength" />
+                </div>
+                <div class="step_1_input">
+                    <span>What is the maximum subdivision of a beat?</span>
+                    <input type="text" name="maxSubd" />
+                </div>
+                <div class="step_1_input">
+                    <span>Quantization:</span>
+                    <input type="text" name="std" />
+                </div>
+                <div class="step_1_input">
+                    <span>In BPM, what is the allowed tempo change?</span>
+                    <input type="text" name="tempoVariation" />
+                </div>
+            </div>
         </div>
-      </div>
-      <button class="main_content_submit" id="next-btn">Next</button>
+        <button class="main_content_submit" id="next-btn">Next</button>
     </template>
-
     <!-- Page 1 Template -->
     <template id="page-1">
-      <span class="main_content_title">Variation percentages</span>
-      <div class="main_content_inputs">
-        <div class="matrix_container">
-          <div id="matrix"></div>
+        <span class="main_content_title">Variation percentages</span>
+        <div class="main_content_inputs">
+            <div class="matrix_container">
+                <div id="matrix"></div>
+            </div>
         </div>
-      </div>
-      <button class="main_content_submit" id="next-btn">Next</button>
+        <button class="main_content_submit" id="next-btn">Next</button>
     </template>
     <!-- Page 2 template -->
     <template id="page-2">
-      <span class="main_content_title">Skeleton building</span>
-      <div class="main_content_inputs">
-        <div class="container" data-nb="{{number_of_beats}}">
-          <div class="editor-container">
-            <div id="controls">
-              <input type="checkbox" id="snapCheckbox" checked />
-              Snap to nearest 0.25 beat
-            </div>
-            <div class="main">
-              <canvas id="circle" width="400" height="400"></canvas>
-              <div class="sounds-panel">
-                <div id="sound-buttons">
-                  <!-- Sound buttons will be generated here -->
+        <span class="main_content_title">Skeleton building</span>
+        <div class="main_content_inputs">
+            <div class="container" data-nb="{{number_of_beats}}">
+                <div class="editor-container">
+                    <div id="controls">
+                        <input type="checkbox" id="snapCheckbox" checked />
+                        Snap to nearest 0.25 beat
+                    </div>
+                    <div class="main">
+                        <canvas id="circle" width="400" height="400"></canvas>
+                        <div class="sounds-panel">
+                            <div id="sound-buttons">
+                                <!-- Sound buttons will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="current-selection">
+                        Current selection: <span id="currentSound">Doom</span>
+                    </div>
+                    <button id="playSkeleton">Play</button>
                 </div>
-              </div>
             </div>
-            <div class="current-selection">
-              Current selection: <span id="currentSound">Doom</span>
-            </div>
-            <button id="playSkeleton">Play</button>
-          </div>
         </div>
-      </div>
-      <button class="main_content_submit" id="next-btn">Generate</button>
+        <button class="main_content_submit" id="next-btn">Generate</button>
     </template>
     <!-- Page 3 template -->
     <template id="page-3">
-      <span class="main_content_title">Result</span>
-      <div id="audio-container"></div>
-      <button class="main_content_submit" id="next-btn">Go back</button>
+        <span class="main_content_title">Result</span>
+        <div id="audio-container"></div>
+        <button class="main_content_submit" id="next-btn">Go back</button>
     </template>
     <div id="tooltip"></div>
     <script src="navigation.js" type="module"></script>
-  </body>
+</body>
+
 </html>
