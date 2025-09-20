@@ -41,8 +41,15 @@ export function page0script() {
         }, duration);
     }
 
+    const inputs = document.querySelectorAll(".step_1_input > input");
+    for (const inp of inputs) {
+        let stored = localStorage.getItem(inp.name);
+        if (stored) {
+            inp.value = stored;
+        }
+    }
+
     document.getElementById("next-btn").addEventListener("click", () => {
-        const inputs = document.querySelectorAll(".step_1_input > input");
         let isOkay = true;
         for (const inp of inputs) {
             if (!inp.value || inp.value.trim().length === 0) {

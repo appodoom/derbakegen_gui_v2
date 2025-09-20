@@ -1,2 +1,4 @@
 backend/.venv/
 notes.txt
+*.wav*
+*__pycache__*
