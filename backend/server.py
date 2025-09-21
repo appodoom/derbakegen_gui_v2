@@ -23,7 +23,7 @@ def serve_audio():
 
         if isinstance(matrix, str):
             matrix = json.loads(matrix)
-
+            
         main(
             num_cycles=num_cycles,
             cycle_length=cycle_length,

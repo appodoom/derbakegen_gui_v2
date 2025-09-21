@@ -42,7 +42,7 @@ def skeleton_generator(amplitude, skeleton, num_cycles, tempos, shift_proba, sr=
     while curr_beat <= num_of_beats_in_audio:
         beat = skeleton[i % skeleton_length][0]
         curr_beat += beat
-        if curr_beat % 1 == 0:
+        if curr_beat % 1 == 0 and len(tempos) > int(curr_beat - 1):
             beat_length_in_samples = int((60 / tempos[int(curr_beat - 1)]) * sr)
         curr_hit = skeleton[i % skeleton_length][1]
         y_hit = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
@@ -218,11 +218,6 @@ def subdivisions_generator_adjusted(
         subdiv_proba=subdiv_proba,
         tempos=tempos,
     )
-    sf.write(
-        "./final_5.wav",
-        y,
-        samplerate=48000,
-    )
     return y, num_of_beats, bpm
 
 
@@ -274,9 +269,9 @@ def main(num_cycles, cycle_length, bpm, maxsubd, shift_proba, allowed_tempo_devi
     0.712676925659180,
     ]
     amplitudes_proba_list = [0.25, 0.25, 0.25, 0.25]
-    probabilities_matrix = get_probability_matrix(matrix=matrix, notes=notes)
     subdiv_proba=matrix[0]
     matrix = matrix[1:]
+    probabilities_matrix = get_probability_matrix(matrix=matrix, notes=notes)
     y_generated, num_of_beats, initial_tempo = subdivisions_generator_adjusted(
         amplitudes=amplitudes,
         amplitudes_proba_list=amplitudes_proba_list,

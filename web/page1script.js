@@ -28,7 +28,7 @@ export function page1script() {
         container.appendChild(document.createElement("div"));
 
         // Column labels (left → right)
-        for (let c = 1; c <= cols; c++) {
+        for (let c = cols; c > 0; c--) {
             const div = document.createElement("div");
             div.className = "col-label";
             div.textContent = c;
