@@ -2,8 +2,9 @@ from flask import Flask, send_file, request, jsonify
 from algorithm import main
 from flask_cors import CORS
 import json
+import uuid
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={"*": {"origins": "*"}})
 
 @app.post('/')
 def serve_audio():
@@ -23,8 +24,10 @@ def serve_audio():
 
         if isinstance(matrix, str):
             matrix = json.loads(matrix)
-            
+        
+        id4 = str(uuid.uuid4())
         main(
+            uuid=id4,
             num_cycles=num_cycles,
             cycle_length=cycle_length,
             bpm=bpm,
@@ -35,8 +38,24 @@ def serve_audio():
             matrix=matrix
         )
 
-        return send_file("./generated.wav", mimetype='audio/wav', as_attachment=False)
+        data = {
+            "uuid":id4,
+            "num_cycles":num_cycles,
+            "cycle_length":cycle_length,
+            "bpm":bpm,
+            "maxsubd":maxsubd,
+            "shift_proba":shift_proba,
+            "allowed_tempo_deviation":allowed_tempo_deviation,
+            "skeleton":skeleton,
+            "matrix":matrix
+        }
+
+        with open(f"./data/{id4}.json", "w") as f:
+            json.dump(data,f)
+
+
+        return send_file(f"./data/{id4}.wav", mimetype='audio/wav', as_attachment=False)
 
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    app.run(host="0.0.0.0",port=5000)

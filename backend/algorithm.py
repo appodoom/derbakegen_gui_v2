@@ -91,6 +91,8 @@ def subdivisions_generator(
     subdiv_array = []
     for i in range(len(subdiv_proba)):
         subdiv_array.append(i)
+    if sum(subdiv_proba) == 0:
+        return y, []
     maxsubdi = random.choices(population=subdiv_array, weights=subdiv_proba, k=1)[0]
     added_hits_intervals = sorted(added_hits_intervals, key=lambda x: x[0])
     subdivisions_y = np.zeros(len(y))
@@ -109,8 +111,8 @@ def subdivisions_generator(
             maxsubd_length = int(beat_length_in_samples / (maxsubd - maxsubdi))
             hits = list(hit_probabilities[maxsubdi].keys())
             weights = list(hit_probabilities[maxsubdi].values())
-            j += 1
             beat_length_in_samples = int(60 * sr / tempos[j])
+            j += 1
         remaining = len(subdivisions_y) - sample_of_curr_subd
         random_proba_list = get_random_proba_list(weights)
         chosen_hit = random.choices(hits, weights=random_proba_list, k=1)[0]
@@ -260,7 +262,7 @@ def get_tempos(number_of_beats, initial_tempo, allowed_tempo_deviation):
     return tempos
 
 
-def main(num_cycles, cycle_length, bpm, maxsubd, shift_proba, allowed_tempo_deviation,skeleton, matrix):
+def main(uuid, num_cycles, cycle_length, bpm, maxsubd, shift_proba, allowed_tempo_deviation,skeleton, matrix):
     notes = ["D", "OTA", "OTI", "PA2"]
     amplitudes = [
     0.052183534022625,
@@ -285,4 +287,4 @@ def main(num_cycles, cycle_length, bpm, maxsubd, shift_proba, allowed_tempo_devi
         cycle_length=cycle_length,
         allowed_tempo_deviation=allowed_tempo_deviation
     )
-    sf.write("generated.wav", data=y_generated, samplerate=48000)
+    sf.write(f"./data/{uuid}.wav", data=y_generated, samplerate=48000)

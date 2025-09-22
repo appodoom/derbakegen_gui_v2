@@ -49,7 +49,7 @@ export function page0script() {
         }
     }
 
-    document.getElementById("next-btn").addEventListener("click", () => {
+    document.getElementById("next-btn1").addEventListener("click", () => {
         let isOkay = true;
         for (const inp of inputs) {
             if (!inp.value || inp.value.trim().length === 0) {
@@ -67,6 +67,27 @@ export function page0script() {
         }
         if (isOkay) {
             localStorage.setItem("currPage", 1);
+            document.getElementById("dummy").click();
+        }
+    });
+    document.getElementById("next-btn2").addEventListener("click", () => {
+        let isOkay = true;
+        for (const inp of inputs) {
+            if (!inp.value || inp.value.trim().length === 0) {
+                showToast("All inputs are required!");
+                isOkay = false;
+                return;
+            }
+            if (isNaN(inp.value)) {
+                showToast("Only enter numbers!");
+                isOkay = false;
+                return;
+            }
+            localStorage.setItem(inp.name, inp.value);
+
+        }
+        if (isOkay) {
+            localStorage.setItem("currPage", 2);
             document.getElementById("dummy").click();
         }
     });
