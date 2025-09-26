@@ -1,19 +1,24 @@
 import librosa
-
+import os
+import random
 # this file contains configuration for generator
 paths = {
-    "D": "./sounds/doum.wav",
-    "OTA": "./sounds/open_tak.wav",
-    "OTI": "./sounds/open_tik.wav",
-    "PA2": "./sounds/pa2.wav",
+    "D": "./sounds/doums",
+    "OTA": "./sounds/taks",
+    "OTI": "./sounds/tiks",
+    "PA2": "./sounds/pa2s",
     # "RA": "./sounds/ra.wav",
     # "T1": "./sounds/tik1.wav",
     # "T2": "./sounds/tik2.wav",
-    "S": "./sounds/silence.wav",
+    "S": "./sounds/silence",
 }
 
 
 def get_audio_data(symbol, sr=48000):
-    path = paths.get(symbol)
-    y, _ = librosa.load(path, sr=sr)
+    directory = paths.get(symbol)
+    files = os.listdir(directory)
+    chosen_file = random.choice(files)
+    print(chosen_file)
+    full_path = os.path.join(directory, chosen_file)
+    y, _ = librosa.load(full_path, sr=sr)
     return y

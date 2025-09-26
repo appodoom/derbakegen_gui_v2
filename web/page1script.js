@@ -61,14 +61,11 @@ export function page1script() {
                 matrix_inputs.push([]);
                 k++;
             }
-            matrix_inputs[k].push(
-                isNaN(matrix_inputs_raw[i].value) ?
-                undefined :
-                Math.abs(Number(matrix_inputs_raw[i].value))
-            );
+            let valuetopush = matrix_inputs_raw[i].value.trim() === "" ? undefined : matrix_inputs_raw[i].value;
+            matrix_inputs[k].push(valuetopush ? (isNaN(valuetopush) ? undefined : Number(valuetopush)) : undefined);
         }
-
         fillMatrix(matrix_inputs);
+        console.log(matrix_inputs);
         return matrix_inputs;
     }
 
@@ -76,7 +73,7 @@ export function page1script() {
         for (let i = 0; i < m.length; i++) {
             let lastValue = 0;
             for (let j = 0; j < m[0].length; j++) {
-                if (m[i][j]) lastValue = m[i][j];
+                if (m[i][j] !== undefined) lastValue = m[i][j];
                 else m[i][j] = lastValue;
             }
         }
