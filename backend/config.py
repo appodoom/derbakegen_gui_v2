@@ -18,7 +18,6 @@ def get_audio_data(symbol, sr=48000):
     directory = paths.get(symbol)
     files = os.listdir(directory)
     chosen_file = random.choice(files)
-    print(chosen_file)
     full_path = os.path.join(directory, chosen_file)
     y, _ = librosa.load(full_path, sr=sr)
     return y
