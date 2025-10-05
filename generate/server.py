@@ -1,15 +1,21 @@
 from flask import Flask, send_file, request, jsonify
 from algorithm import generate_derbouka
 from flask_cors import CORS
+from dotenv import load_dotenv
 import json
 import uuid
+import os
 
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, resources={"*": {"origins": "*"}})
 
-# ONLY ROUTE for now
-@app.post('/')
+@app.get("/api/generate/test/")
+def test():
+    return "Success", 200
+
+@app.post('/api/generate/')
 def serve_audio():
         data = request.get_json()
 
@@ -65,4 +71,4 @@ def serve_audio():
 
 
 if __name__ == "__main__":
-    app.run(port=5000) # running on 127.0.0.1:5000 (not 0.0.0.0)
+    app.run(port=os.getenv("GENERATE_PORT")) # running on 127.0.0.1:5000 (not 0.0.0.0)

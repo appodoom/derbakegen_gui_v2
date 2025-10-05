@@ -1,5 +1,2 @@
-backend/.venv/
 notes.txt
-backend/data/
-*__pycache__*
-backend/sounds/
+.env

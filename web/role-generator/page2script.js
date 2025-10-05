@@ -13,13 +13,13 @@ export function page2script() {
     let stopLoop = null;
 
     const pathsMap = {
-        Doom: "http://localhost:8080/sounds/doum.wav",
-        "Open Tak": "http://localhost:8080/sounds/open_tak.wav",
-        "Open Tik": "http://localhost:8080/sounds/open_tik.wav",
+        Doom: "/web/sounds/doum.wav",
+        "Open Tak": "/web/sounds/open_tak.wav",
+        "Open Tik": "/web/sounds/open_tik.wav",
         // Tik1: "http://localhost:8080/sounds/tik1.wav",
         // Tik2: "http://localhost:8080/sounds/tik2.wav",
         // Ra2: "http://localhost:8080/sounds/ra.wav",
-        Pa2: "http://localhost:8080/sounds/pa2.wav",
+        Pa2: "/web/sounds/pa2.wav",
     };
 
     const symbolMap = {

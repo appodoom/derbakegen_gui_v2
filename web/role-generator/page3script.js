@@ -15,7 +15,7 @@ export async function page3script() {
     try {
         audioContainer.innerHTML = `<div class="loading">Loading audio...</div>`;
 
-        const res = await fetch("http://localhost:5000/", {
+        const res = await fetch("/api/generate/", {
             method: "POST",
             body,
             headers: {
