@@ -13,13 +13,13 @@ export function page2script() {
     let stopLoop = null;
 
     const pathsMap = {
-        Doom: "/web/sounds/doum.wav",
-        "Open Tak": "/web/sounds/open_tak.wav",
-        "Open Tik": "/web/sounds/open_tik.wav",
+        Doom: "/web/generate/sounds/doum.wav",
+        "Open Tak": "/web/generate/sounds/open_tak.wav",
+        "Open Tik": "/web/generate/sounds/open_tik.wav",
         // Tik1: "http://localhost:8080/sounds/tik1.wav",
         // Tik2: "http://localhost:8080/sounds/tik2.wav",
         // Ra2: "http://localhost:8080/sounds/ra.wav",
-        Pa2: "/web/sounds/pa2.wav",
+        Pa2: "/web/generate/sounds/pa2.wav",
     };
 
     const symbolMap = {
@@ -125,18 +125,44 @@ export function page2script() {
         }
 
         // draw markers
+        // markers.forEach((m) => {
+        //     const angle = beatToAngle(m.beat) - Math.PI / 2;
+        //     const x = cx + radius * Math.cos(angle);
+        //     const y = cy + radius * Math.sin(angle);
+        //     ctx.beginPath();
+        //     ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        //     ctx.fillStyle = colors[m.sound] || "red";
+        //     ctx.fill();
+        //     ctx.strokeStyle = "#2c3e50";
+        //     ctx.lineWidth = 1.5;
+        //     ctx.stroke();
+        // });
         markers.forEach((m) => {
             const angle = beatToAngle(m.beat) - Math.PI / 2;
             const x = cx + radius * Math.cos(angle);
             const y = cy + radius * Math.sin(angle);
+
+            ctx.save();
             ctx.beginPath();
-            ctx.arc(x, y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = colors[m.sound] || "red";
+
+            if (m.active) {
+                // glow / highlight effect
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = colors[m.sound];
+                ctx.fillStyle = colors[m.sound];
+                ctx.arc(x, y, 14, 0, 2 * Math.PI);
+            } else {
+                ctx.fillStyle = colors[m.sound];
+                ctx.arc(x, y, 10, 0, 2 * Math.PI);
+            }
+
             ctx.fill();
             ctx.strokeStyle = "#2c3e50";
             ctx.lineWidth = 1.5;
             ctx.stroke();
+            ctx.restore();
         });
+
 
         // draw hover
         if (hoverBeat !== null) {
@@ -152,6 +178,12 @@ export function page2script() {
             ctx.stroke();
         }
     }
+
+    function animate() {
+        draw();
+        requestAnimationFrame(animate);
+    }
+    animate();
 
     // mouse events
     canvas.addEventListener("mousemove", (e) => {
@@ -191,7 +223,7 @@ export function page2script() {
                 break;
             }
         }
-        markers.push({ beat, sound: selectedSound });
+        markers.push({ beat, sound: selectedSound, active: false });
         draw();
     });
 
@@ -267,6 +299,12 @@ export function page2script() {
                 source.buffer = sound;
                 source.connect(audioCtx.destination);
                 source.start(playTime);
+                const now = audioCtx.currentTime;
+                const delay = (playTime - now) * 1000; // convert to ms
+                setTimeout(() => {
+                    hit.active = true;
+                    setTimeout(() => (hit.active = false), 150); // duration of glow
+                }, delay);
             }
         }
 

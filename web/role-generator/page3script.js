@@ -15,6 +15,7 @@ export async function page3script() {
     try {
         audioContainer.innerHTML = `<div class="loading">Loading audio...</div>`;
 
+        const token = localStorage.getItem("token");
         const res = await fetch("/api/generate/", {
             method: "POST",
             body,
@@ -22,6 +23,11 @@ export async function page3script() {
                 "Content-Type": "application/json",
             },
         });
+
+        const audioId = res.headers.get("X-Audio-ID");
+        if (!audioId) {
+            throw new Error();
+        }
 
         const audioBlob = await res.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -38,10 +44,35 @@ export async function page3script() {
 
         audioContainer.innerHTML = "";
         audioContainer.appendChild(audioEl);
+        document.getElementById("publish-btn").style.display = "block";
+        document.getElementById("publish-btn").addEventListener("click", async (e) => {
+            document.getElementById("publish-btn").innerText = "Publishing...";
+            document.getElementById("publish-btn").disabled = true;
+
+            try {
+                const btn = document.getElementById("publish-btn");
+                btn.innerText = "Publishing...";
+                btn.disabled = true;
+
+                const res = await fetch(`/api/generate/publish?id=${audioId}`, {
+                    "credentials": "include"
+                });
+                if (!res.ok) {
+                    throw new Error(`Publish failed with status ${res.status}`);
+                }
+
+                btn.innerText = "Published!";
+            } catch (err) {
+                const btn = document.getElementById("publish-btn");
+                btn.innerText = "Publish Failed";
+                console.error("Publish error:", err);
+            }
+        })
     } catch (err) {
         audioContainer.innerHTML = `<div class="error">Failed to load audio</div>`;
         console.error("Audio fetch error:", err);
     }
+
 
     const backBtn = document.querySelector("#next-btn");
     backBtn.addEventListener("click", () => {

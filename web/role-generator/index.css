@@ -275,3 +275,7 @@ html {
     justify-content: center;
     align-items: center;
 }
+
+button:disabled {
+    cursor: default;
+}

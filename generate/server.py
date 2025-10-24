@@ -1,22 +1,102 @@
-from flask import Flask, send_file, request, jsonify
+from flask import Flask, send_file, request, jsonify, make_response
 from algorithm import generate_derbouka
 from flask_cors import CORS
 from dotenv import load_dotenv
 import json
 import uuid
 import os
+import aiofiles
+import aioboto3
+import asyncio
+import jwt
 
 load_dotenv()
+from db.schema import init_models, AsyncSessionLocal, Sound
+
+
 
 app = Flask(__name__)
-CORS(app, resources={"*": {"origins": "*"}})
+CORS(app, resources={"*": {"origins": "*"}}, supports_credentials=True)
 
 @app.get("/api/generate/test/")
 def test():
     return "Success", 200
 
+S3_BUCKET = os.getenv("S3_BUCKET")
+S3_REGION = os.getenv("S3_REGION")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+
+@app.get("/api/generate/publish/")
+async def publish():
+    token = request.cookies.get("token")
+    if not token:
+        return jsonify({"error": "Missing token"}), 403
+
+    audioid = request.args.get("id")
+    if not audioid:
+        return jsonify({"error": "Missing ?id parameter."}), 400
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("id")
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 403
+
+    data_dir = "./data"
+    wav_path = os.path.join(data_dir, f"{audioid}.wav")
+    json_path = os.path.join(data_dir, f"{audioid}.json")
+
+    if not os.path.exists(wav_path) or not os.path.exists(json_path):
+        return jsonify({"error": "Audio or metadata file not found"}), 404
+
+    try:
+        # Load JSON asynchronously
+        async with aiofiles.open(json_path, "r", encoding="utf-8") as f:
+            metadata_str = await f.read()
+            metadata = json.loads(metadata_str)
+
+        # Upload asynchronously to S3
+        session = aioboto3.Session()
+
+        async with session.client(
+            "s3",
+            region_name=S3_REGION,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        ) as s3:
+            async with aiofiles.open(wav_path, "rb") as audio_file:
+                await s3.upload_fileobj(audio_file, S3_BUCKET, f"{audioid}.wav")
+
+        s3_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{audioid}.wav"
+
+        async with AsyncSessionLocal() as session:
+            sound = Sound(
+                id=audioid,
+                generated_by=user_id,
+                settings=metadata,
+                url=s3_url
+            )
+            session.add(sound)
+            await session.commit()
+
+        # Delete files asynchronously
+        await asyncio.gather(
+            asyncio.to_thread(os.remove, wav_path),
+            asyncio.to_thread(os.remove, json_path)
+        )
+
+        return "OK", 200
+
+    except Exception as e:
+        print("Error:", e)
+        return "Internal Server Error", 500
+
+
 @app.post('/api/generate/')
-def serve_audio():
+async def serve_audio():
         data = request.get_json()
 
         # parse data from frontend
@@ -36,22 +116,23 @@ def serve_audio():
             matrix = json.loads(matrix)
         
         id4 = str(uuid.uuid4()) # unique id for sound
-        generate_derbouka(
-            uuid=id4,
-            num_cycles=num_cycles,
-            cycle_length=cycle_length,
-            bpm=bpm,
-            maxsubd=maxsubd,
-            shift_proba=shift_proba,
-            allowed_tempo_deviation=allowed_tempo_deviation,
-            skeleton=skeleton,
-            matrix=matrix
-        )
 
+        await asyncio.to_thread(
+        generate_derbouka,
+        id4,
+        num_cycles,
+        cycle_length,
+        bpm,
+        maxsubd,
+        shift_proba,
+        allowed_tempo_deviation,
+        skeleton,
+        matrix
+        )
 
         # TODO: database
         # saving data in JSON
-        data = {
+        metadata = {
             "uuid":id4,
             "num_cycles":num_cycles,
             "cycle_length":cycle_length,
@@ -63,12 +144,43 @@ def serve_audio():
             "matrix":matrix
         }
 
-        with open(f"./data/{id4}.json", "w") as f:
-            json.dump(data,f)
+        os.makedirs("./data", exist_ok=True)
+        async with aiofiles.open(f"./data/{id4}.json", "w") as f:
+            await f.write(json.dumps(metadata))
 
+        response = await asyncio.to_thread(
+            make_response,
+            send_file(f"./data/{id4}.wav", mimetype="audio/wav", as_attachment=False)
+        )
+        response.headers["X-Audio-ID"] = id4
+        return response
 
-        return send_file(f"./data/{id4}.wav", mimetype='audio/wav', as_attachment=False)
-
+async def create_app():
+    """Async application factory"""
+    await init_models()
+    return app
 
 if __name__ == "__main__":
-    app.run(port=os.getenv("GENERATE_PORT")) # running on 127.0.0.1:5000 (not 0.0.0.0)
+    import uvicorn
+    from asgiref.wsgi import WsgiToAsgi
+    
+    async def main():
+        # Initialize database first
+        await create_app()
+        
+        # Convert Flask app to ASGI
+        asgi_app = WsgiToAsgi(app)
+        
+        # Create uvicorn config and server
+        config = uvicorn.Config(
+            asgi_app,
+            host="localhost",
+            port=int(os.getenv("GENERATE_PORT", 5000)),
+            log_level="info"
+        )
+        server = uvicorn.Server(config)
+        
+        # Run the server using the same event loop
+        await server.serve()
+    
+    asyncio.run(main())
