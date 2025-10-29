@@ -16,18 +16,19 @@ let proxies = [];
 // Proxy Class Definition
 // =======================
 class Proxy {
-    constructor(name, context, port, protocol = "http") {
+    constructor(name, context, port, host = "localhost", protocol = "http") {
         this.name = name;
         this.context = context;
         this.port = port;
         this.protocol = protocol;
+        this.host = host;
         proxies.push(this);
     }
 
     create() {
         return createHttpProxyMiddleware(this.context, {
             target: {
-                host: "localhost",
+                host: this.host,
                 port: this.port,
                 protocol: this.protocol,
             },
@@ -36,7 +37,7 @@ class Proxy {
     }
 
     get path() {
-        return `${this.protocol}://localhost:${this.port}/${this.name}`;
+        return `${this.protocol}://${this.host}:${this.port}/${this.name}`;
     }
 
     async test() {
@@ -54,8 +55,8 @@ class Proxy {
 // =======================
 // Creating Proxies
 // =======================
-const generateApi = new Proxy("api/generate", "/api/generate/**", process.env.GENERATE_PORT);
-const webApi = new Proxy("web", "/web/**", process.env.WEB_PORT);
+const generateApi = new Proxy("api/generate", "/api/generate/**", process.env.GENERATE_PORT, "generate");
+const webApi = new Proxy("web", "/web/**", process.env.WEB_PORT, "web");
 
 const proxiesToTest = [generateApi, webApi];
 const proxiesRequestHandlers = new Map();

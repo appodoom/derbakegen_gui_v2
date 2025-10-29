@@ -172,8 +172,8 @@ if __name__ == "__main__":
         # Create uvicorn config and server
         config = uvicorn.Config(
             asgi_app,
-            host="localhost",
-            port=int(os.getenv("GENERATE_PORT", 5000)),
+            host="0.0.0.0",
+            port=int(os.getenv("GENERATE_PORT")),
             log_level="info"
         )
         server = uvicorn.Server(config)
