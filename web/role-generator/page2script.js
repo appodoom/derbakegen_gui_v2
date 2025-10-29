@@ -97,12 +97,21 @@ export function page2script() {
     }
 
     function draw() {
+        // Get colors from CSS variables
+        const styles = getComputedStyle(document.documentElement);
+        const circleColor = styles.getPropertyValue('--border-strong').trim() || '#34495e';
+        const tickColor = styles.getPropertyValue('--text').trim() || '#2c3e50';
+        const secondaryTickColor = styles.getPropertyValue('--error').trim() || 'red';
+        const markerBorder = styles.getPropertyValue('--border-strong').trim() || '#2c3e50';
+        const hoverColor = 'rgba(52, 152, 219, 0.3)';
+        const hoverBorder = 'rgba(52, 152, 219, 0.7)';
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // draw circle
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = "#34495e";
+        ctx.strokeStyle = circleColor; // CHANGED
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -117,12 +126,14 @@ export function page2script() {
 
             if (i % 2 === 0) {
                 ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                ctx.strokeStyle = tickColor; // CHANGED
             } else {
                 ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.strokeStyle = secondaryTickColor; // CHANGED
             }
-            ctx.strokeStyle = i % 2 === 0 ? "#2c3e50" : "red";
             ctx.stroke();
         }
+
 
         // draw markers
         // markers.forEach((m) => {
@@ -171,9 +182,9 @@ export function page2script() {
             const y = cy + radius * Math.sin(angle);
             ctx.beginPath();
             ctx.arc(x, y, 10, 0, 2 * Math.PI);
-            ctx.fillStyle = "rgba(52, 152, 219, 0.3)";
+            ctx.fillStyle = hoverColor;
             ctx.fill();
-            ctx.strokeStyle = "rgba(52, 152, 219, 0.7)";
+            ctx.strokeStyle = hoverBorder;
             ctx.lineWidth = 2;
             ctx.stroke();
         }

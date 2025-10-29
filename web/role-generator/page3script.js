@@ -54,7 +54,7 @@ export async function page3script() {
                 btn.innerText = "Publishing...";
                 btn.disabled = true;
 
-                const res = await fetch(`/api/generate/publish?id=${audioId}`, {
+                const res = await fetch(`/api/generate/publish/?id=${audioId}`, {
                     "credentials": "include"
                 });
                 if (!res.ok) {
@@ -70,7 +70,7 @@ export async function page3script() {
         })
     } catch (err) {
         audioContainer.innerHTML = `<div class="error">Failed to load audio</div>`;
-        console.error("Audio fetch error:", err);
+        console.error("Audio fetch error:", err.message);
     }
 
 

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", async (e) => {
+export async function page0script(p) {
     function showToast(message, duration = 3000) {
         let container = document.getElementById("toast-container");
         if (!container) {
@@ -40,6 +40,12 @@ document.addEventListener("DOMContentLoaded", async (e) => {
             });
         }, duration);
     }
+
+    document.getElementById("switch_page").addEventListener("click", () => {
+        p[0] = Number(!p[0]);
+        document.getElementById("dummy").click();
+    })
+
     const container = document.querySelector(".users"); // Adjust selector as needed
     const dict = {};
 
@@ -60,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async (e) => {
         const data = await res.json();
         const { users } = data;
 
-        if (!users || users.length === 0) {
+        if (!users || users.length === 1) {
             container.textContent = "No users to show.";
             return;
         }
@@ -87,7 +93,6 @@ document.addEventListener("DOMContentLoaded", async (e) => {
                 { value: "none", text: "Decline access" },
                 { value: "generate", text: "Generator" },
                 { value: "rate", text: "Rator" },
-                { value: "delete", text: "Freeze account" }
             ];
 
             options.forEach(optionData => {
@@ -141,4 +146,4 @@ document.addEventListener("DOMContentLoaded", async (e) => {
         showToast("Changes applied successfully!")
 
     })
-});
+}

@@ -6,12 +6,20 @@ const bcrypt = require("bcrypt");
 const path = require("path");
 const uuid4 = require("uuid4");
 const jwt = require('jsonwebtoken');
+const AWS = require('aws-sdk');
 const cookieParser = require("cookie-parser");
 const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN } = require("./paths.js");
 const { validate } = require("./utils");
 require("dotenv").config({ path: "../.env" });
-const { User, sequelize } = require("./db/user_schema.js");
+const { Rating, Question, User, Sound, sequelize } = require("./db/schemas.js");
 const { log, generatorRoleRequired, ratorRoleRequired, findRole, adminRoleRequired } = require("./middlewares");
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.S3_REGION
+});
+
+const s3 = new AWS.S3();
 
 const app = express();
 app.use(cors({ origin: "*" }))
@@ -35,6 +43,58 @@ const cookieoptions = {
     sameSite: "lax"
 }
 
+app.get('/web/api/me/', async (req, res) => {
+
+    if (!req.cookies || !req.cookies.token) {
+        res.status(403);
+        res.redirect("/web/login/");
+        return;
+    }
+
+    const token = req.cookies.token;
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+
+    if (!decoded || !decoded.id) {
+        res.status(403);
+        res.redirect("/web/login/");
+        return;
+    }
+
+    try {
+        const user = await User.findOne({ where: { id: decoded.id } });
+        if (!user) {
+            res.status(403);
+            res.redirect("/web/login/");
+            return;
+        }
+
+        let out = { "username": user.username, "Logout": "/web/logout/" };
+        switch (user.role) {
+            case "rate":
+                out["Rate"] = "/web/rate/";
+                break;
+            case "generate":
+                out["Rate"] = "/web/rate/";
+                out["Generate"] = "/web/generate/";
+                break;
+            case "admin":
+                out["Rate"] = "/web/rate/";
+                out["Generate"] = "/web/generate/";
+                out["Dashboard"] = "/web/admin/";
+                break;
+            default:
+                break;
+        }
+
+        res.status(200).json(out);
+
+    } catch (e) {
+        res.status(403);
+        res.redirect("/web/login");
+        return;
+    }
+})
+
 app.get("/web/api/users/", adminRoleRequired, async (req, res) => {
     try {
         const users = await User.findAll();
@@ -43,6 +103,123 @@ app.get("/web/api/users/", adminRoleRequired, async (req, res) => {
         res.status(500).json({ error: "Something went wrong." });
     }
 })
+
+app.post("/web/api/rate/", ratorRoleRequired, async (req, res) => {
+    try {
+        const { ratings, sound } = req.body;
+        const id = uuid4();
+        const token = req.cookies.token;
+
+        const { id: userid } = jwt.verify(token, process.env.SECRET_KEY);
+
+        const rating = await Rating.create({ id, rated_by: userid, sound, ratings })
+
+        if (!rating) {
+            res.status(400).json({ error: "Something went wrong" });
+            return;
+        }
+
+        res.sendStatus(200);
+    } catch (e) {
+        console.log(e.message);
+        res.status(500).json({ error: "Something went wrong" });
+    }
+})
+
+
+app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
+    try {
+        const randomSound = await Sound.findOne({
+            order: sequelize.random()
+        });
+
+        if (!randomSound) {
+            return res.status(400).json({ error: "No available audios" });
+        }
+
+        const { url } = randomSound;
+
+        // Extract bucket and key from S3 URL
+        // URL format: https://bucket-name.s3.region.amazonaws.com/key/path/audio.wav
+        const urlObj = new URL(url);
+        const bucket = urlObj.hostname.split('.')[0];
+        const key = urlObj.pathname.substring(1); // Remove leading slash
+
+        const s3Object = await s3.getObject({
+            Bucket: bucket,
+            Key: key
+        }).promise();
+
+        res.setHeader('Content-Type', 'audio/wav');
+        res.setHeader('Content-Disposition', 'inline; filename="audio.wav"');
+        res.setHeader('Content-Length', s3Object.ContentLength);
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('X-Audio-ID', randomSound.id);
+
+        res.send(s3Object.Body);
+
+    } catch (e) {
+        console.error('Error fetching random audio:', e);
+
+        if (e.code === 'NoSuchKey') {
+            return res.status(404).json({ error: "Audio file not found in S3" });
+        }
+        if (e.code === 'NoSuchBucket') {
+            return res.status(404).json({ error: "S3 bucket not found" });
+        }
+
+        res.status(500).json({ error: "Something went wrong." });
+    }
+});
+
+app.get("/web/api/questions/", ratorRoleRequired, async (req, res) => {
+    try {
+        const questions = await Question.findAll();
+        res.status(200).json({ questions });
+    } catch (e) {
+        res.status(500).json({ error: "Something went wrong." });
+    }
+})
+
+app.put("/web/api/questions/", adminRoleRequired, async (req, res) => {
+    try {
+        const questions = req.body;
+        const updatePromises = Object.entries(questions).map(([id, newActive]) => {
+            Question.update({ active: newActive }, { where: { id } });
+        })
+
+        await Promise.all(updatePromises);
+
+        res.sendStatus(200);
+    } catch (e) {
+        res.status(500).json({ error: "Something went wrong." })
+    }
+
+})
+
+app.post("/web/api/questions/", adminRoleRequired, async (req, res) => {
+    try {
+        const { question, description, active } = req.body;
+        if (active === null) active = true;
+        if (!validate(1, question)) {
+            res.status(400);
+            res.json({ error: "Please fill all required fields" });
+        }
+
+        const id = uuid4();
+        const q = await Question.create({ id, question, description: description || "", active });
+
+        if (!q) {
+            throw new Error();
+            return;
+        }
+
+        res.sendStatus(200);
+    } catch (e) {
+        res.status(500).json({ error: "Something went wrong." });
+    }
+})
+
 
 app.post("/web/api/roles/", adminRoleRequired, async (req, res) => {
     try {
@@ -130,6 +307,15 @@ app.post("/web/api/login/", async (req, res) => {
     }
 })
 
+
+app.get("/web/logout/", (req, res) => {
+    res.clearCookie("token", {
+        path: "/",
+        sameSite: "lax",
+        httpOnly: true
+    });
+    res.redirect("/web/login/");
+})
 
 /*
     -------------------- WEB SERVER ---------------------

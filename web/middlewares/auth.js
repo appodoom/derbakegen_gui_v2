@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User } = require("../db/user_schema.js");
+const { User } = require("../db/schemas.js");
 
 async function adminRoleRequired(req, res, next) {
     if (!req.cookies || !req.cookies.token) {
@@ -60,7 +60,7 @@ async function generatorRoleRequired(req, res, next) {
             res.redirect("/web/login/");
             return;
         }
-        if (user.role !== "generate") {
+        if (!["admin", "generate"].includes(user.role)) {
             res.status(403);
             res.redirect("/web/");
             return;
@@ -96,7 +96,7 @@ async function ratorRoleRequired(req, res, next) {
             res.redirect("/web/login/");
             return;
         }
-        if (!(["rate", "generate"].includes(user.role))) {
+        if (!(["rate", "generate", "admin"].includes(user.role))) {
             res.status(403);
             res.redirect("/web/");
             return;

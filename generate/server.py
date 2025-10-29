@@ -130,8 +130,6 @@ async def serve_audio():
         matrix
         )
 
-        # TODO: database
-        # saving data in JSON
         metadata = {
             "uuid":id4,
             "num_cycles":num_cycles,
