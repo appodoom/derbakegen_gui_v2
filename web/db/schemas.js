@@ -128,6 +128,40 @@ const Sound = sequelize.define('Sound', {
     timestamps: false,
 });
 
+// After defining all models, add associations:
+// Sound associations
+Sound.hasMany(Rating, {
+    foreignKey: 'sound',
+    as: 'ratings'
+});
+
+Sound.belongsTo(User, {
+    foreignKey: 'generated_by',
+    as: 'generator'
+});
+
+// Rating associations
+Rating.belongsTo(Sound, {
+    foreignKey: 'sound',
+    as: 'soundInfo'
+});
+
+Rating.belongsTo(User, {
+    foreignKey: 'rated_by',
+    as: 'rater'
+});
+
+// User associations
+User.hasMany(Sound, {
+    foreignKey: 'generated_by',
+    as: 'sounds'
+});
+
+User.hasMany(Rating, {
+    foreignKey: 'rated_by',
+    as: 'ratings'
+});
+
 (async () => {
     try {
         await sequelize.authenticate();

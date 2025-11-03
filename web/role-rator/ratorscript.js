@@ -78,8 +78,9 @@ document.addEventListener("DOMContentLoaded", async (e) => {
         audioContainer.innerHTML = "Loading random audio...";
 
         if (!questionsResponse.ok) {
-            const questionsError = await questionsResponse.json().catch(() => ({ error: "Questions fetch failed" }));
-            throw new Error(questionsError.error);
+            const { error } = await questionsResponse.json()
+            showToast(error);
+            return;
         }
 
         if (questionsResponse.redirected) {
@@ -116,10 +117,10 @@ document.addEventListener("DOMContentLoaded", async (e) => {
         };
 
         const audioResponse = await fetch("/web/api/random_audio/");
-
         if (!audioResponse.ok) {
-            const audioError = await audioResponse.json().catch(() => ({ error: "Questions fetch failed" }));
-            throw new Error(audioError.error);
+            const { error } = await audioResponse.json();
+            audioContainer.innerHTML = "Congrats! You rated all of our available audios.";
+            return;
         }
 
         if (audioResponse.redirected) {

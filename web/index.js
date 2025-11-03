@@ -8,8 +8,9 @@ const uuid4 = require("uuid4");
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const cookieParser = require("cookie-parser");
+const { Op } = require("sequelize");
 const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN } = require("./paths.js");
-const { validate } = require("./utils");
+const { validate, getUserId } = require("./utils");
 require("dotenv").config({ path: "../.env" });
 const { Rating, Question, User, Sound, sequelize } = require("./db/schemas.js");
 const { log, generatorRoleRequired, ratorRoleRequired, findRole, adminRoleRequired } = require("./middlewares");
@@ -108,10 +109,7 @@ app.post("/web/api/rate/", ratorRoleRequired, async (req, res) => {
     try {
         const { ratings, sound } = req.body;
         const id = uuid4();
-        const token = req.cookies.token;
-
-        const { id: userid } = jwt.verify(token, process.env.SECRET_KEY);
-
+        const userid = getUserId(req);
         const rating = await Rating.create({ id, rated_by: userid, sound, ratings })
 
         if (!rating) {
@@ -129,9 +127,34 @@ app.post("/web/api/rate/", ratorRoleRequired, async (req, res) => {
 
 app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
     try {
-        const randomSound = await Sound.findOne({
-            order: sequelize.random()
+        const userId = getUserId(req);
+
+        // Get all sound IDs that this user has already rated
+        const ratedSoundIds = await Rating.findAll({
+            where: { rated_by: userId },
         });
+
+        const ratedIds = [];
+        for (const rate of ratedSoundIds) {
+            ratedIds.push(rate.sound);
+        }
+
+        // Find a random sound that hasn't been rated by this user
+        let randomSound = null;
+        if (ratedIds.length > 0) {
+            randomSound = await Sound.findOne({
+                where: {
+                    id: {
+                        [Op.notIn]: ratedIds
+                    }
+                },
+                order: sequelize.random()
+            });
+        } else {
+            randomSound = await Sound.findOne({
+                order: sequelize.random()
+            });
+        }
 
         if (!randomSound) {
             return res.status(400).json({ error: "No available audios" });
@@ -140,10 +163,9 @@ app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
         const { url } = randomSound;
 
         // Extract bucket and key from S3 URL
-        // URL format: https://bucket-name.s3.region.amazonaws.com/key/path/audio.wav
         const urlObj = new URL(url);
         const bucket = urlObj.hostname.split('.')[0];
-        const key = urlObj.pathname.substring(1); // Remove leading slash
+        const key = urlObj.pathname.substring(1);
 
         const s3Object = await s3.getObject({
             Bucket: bucket,
