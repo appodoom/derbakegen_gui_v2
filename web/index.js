@@ -347,12 +347,9 @@ app.use("/web/login/", express.static(LOGIN));
 app.use("/web/generate/", generatorRoleRequired, express.static(GENERATE));
 app.use("/web/rate/", ratorRoleRequired, express.static(RATE));
 app.use("/web/admin/", adminRoleRequired, express.static(ADMIN));
+app.use("/web/404/", express.static(PAGE_404));
 app.use("/web/", findRole, express.static(WAIT_ROOM));
 
-app.use("/web/404/", express.static(PAGE_404));
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(PAGE_404, "index.html"));
-});
 
 
 app.listen(process.env.WEB_PORT, () => {

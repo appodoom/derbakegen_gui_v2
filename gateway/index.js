@@ -127,10 +127,18 @@ async function periodicTest(deltaSeconds) {
 
     app.use(cors());
     // app.use(limiter);
+    app.get('/', (req, res) => {
+        res.redirect('/web/');
+    });
+
 
     for (const proxy of proxies) {
         app.use(proxy.context, customExpressRequestHandler(proxy.name));
     }
+
+    app.use((req, res) => {
+        res.redirect('/web/404/');
+    })
 
     const GATEWAY_PORT = process.env.GATEWAY_PORT || 8080;
     app.listen(GATEWAY_PORT, () => {
