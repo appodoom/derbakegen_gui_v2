@@ -65,7 +65,6 @@ export function page1script() {
             matrix_inputs[k].push(valuetopush ? (isNaN(valuetopush) ? undefined : Number(valuetopush)) : undefined);
         }
         fillMatrix(matrix_inputs);
-        console.log(matrix_inputs);
         return matrix_inputs;
     }
 

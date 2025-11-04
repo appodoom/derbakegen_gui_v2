@@ -44,13 +44,27 @@ export function page0script() {
                 isOkay = false;
                 return;
             }
-            if (isNaN(inp.value)) {
-                showToast("Only enter numbers!");
+            if (isNaN(inp.value) || Number(inp.value) < 0) {
+                showToast("Only enter positive numbers!");
                 isOkay = false;
                 return;
             }
-            localStorage.setItem(inp.name, inp.value);
+            if (inp.name === "maxSubd") {
+                if (Number(inp.value) > 16) {
+                    showToast("Maximum subdivision must be <= 16");
+                    isOkay = false;
+                    return;
+                }
+            }
 
+            if (inp.name === "std") {
+                if (Number(inp.value) > 100) {
+                    showToast("Quantization must be <= 100");
+                    isOkay = false;
+                    return;
+                }
+            }
+            localStorage.setItem(inp.name, inp.value);
         }
         if (isOkay) {
             localStorage.setItem("currPage", 1);
@@ -74,6 +88,22 @@ export function page0script() {
 
         }
         if (isOkay) {
+            function getMatrix() {
+                const maxsubd = Number(localStorage.getItem("maxSubd"));
+                const matrix_inputs = [];
+                let k = -1;
+                for (let i = 0; i < maxsubd * 5; i++) {
+                    if (i % maxsubd === 0) {
+                        matrix_inputs.push([]);
+                        k++;
+                    }
+                    let valuetopush = 0
+                    matrix_inputs[k].push(valuetopush);
+                }
+                return matrix_inputs;
+            }
+            const matrix = localStorage.getItem("matrix");
+            if (!matrix) localStorage.setItem("matrix", JSON.stringify(getMatrix()));
             localStorage.setItem("currPage", 2);
             document.getElementById("dummy").click();
         }
