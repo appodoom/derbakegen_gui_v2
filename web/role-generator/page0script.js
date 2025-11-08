@@ -46,7 +46,7 @@ export function page0script() {
                 continue;
             }
             if (!inp.value || inp.value.trim().length === 0) {
-                showToast("All inputs are required!");
+                showToast("All inputs are required! (Except the ones with default values)");
                 isOkay = false;
                 return;
             }
