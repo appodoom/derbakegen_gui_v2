@@ -5,6 +5,25 @@ from config_skeleton import get_audio_data_skeleton
 import soundfile as sf
 import random
 
+def apply_cross_fade(hit_audio, fade_samples=500):
+    """Apply exponential cross-fade to beginning and end of audio."""
+    if len(hit_audio) <= fade_samples * 4:
+        fade_samples = len(hit_audio) // 4
+
+    # Exponential fade-in: from near 0 to 1
+    fade_in = np.exp(np.linspace(-4, 0, fade_samples))
+    fade_in = (fade_in - fade_in.min()) / (fade_in.max() - fade_in.min())
+
+    # Exponential fade-out: from 1 to near 0
+    fade_out = np.exp(np.linspace(0, -4, fade_samples))
+    fade_out = (fade_out - fade_out.min()) / (fade_out.max() - fade_out.min())
+
+    hit_audio = hit_audio.copy()
+    hit_audio[:fade_samples] *= fade_in
+    hit_audio[-fade_samples:] *= fade_out  # reverse to make it decay
+
+    return hit_audio
+
 def get_random_proba_list(weights):
     output = []
     for weight in weights:
@@ -80,7 +99,9 @@ def subdivisions_generator(
         if chosen_hit == "S":
             curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat] # check add length
         else:
-            hit_y = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
+            # hit_y = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
+            hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
+            hit_y = apply_cross_fade(hit_y_raw)
             add_len = min(len(hit_y), remaining)
             no_overlap = True
             for start, _ in added_hits_intervals:
@@ -151,7 +172,9 @@ def skeleton_generator(amplitude: float, skeleton: list[tuple[float, str]], num_
 
         curr_hit = skeleton[i % skeleton_length][1] #get the hit
         # get the y of the hit
-        y_hit = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
+        # y_hit = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
+        y_hit_raw = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
+        y_hit = apply_cross_fade(y_hit_raw)
 
         expected_hit_timestamp += int(beat * beat_length_in_samples)
         
