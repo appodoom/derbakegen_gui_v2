@@ -36,9 +36,15 @@ export function page0script() {
         }
     }
 
-    document.getElementById("next-btn1").addEventListener("click", () => {
+    function checkInputs(fields) {
         let isOkay = true;
-        for (const inp of inputs) {
+        for (const inp of fields) {
+            const allowedNull = ["tempoVariation", "std", "amplitudeVariation"];
+            if (allowedNull.includes(inp.name) && (!inp.value || inp.value.trim().length === 0)) {
+                localStorage.setItem(inp.name, "");
+                localStorage.removeItem(inp.name);
+                continue;
+            }
             if (!inp.value || inp.value.trim().length === 0) {
                 showToast("All inputs are required!");
                 isOkay = false;
@@ -50,8 +56,15 @@ export function page0script() {
                 return;
             }
             if (inp.name === "maxSubd") {
-                if (Number(inp.value) > 16) {
-                    showToast("Maximum subdivision must be <= 16");
+                if (Number(inp.value) > 16 || Number(inp.value) < 1) {
+                    showToast("Maximum subdivision must be between 1 and 16");
+                    isOkay = false;
+                    return;
+                }
+            }
+            if (inp.name === "tempo") {
+                if (Number(inp.value) < 1) {
+                    showToast("Tempo must be >= 1");
                     isOkay = false;
                     return;
                 }
@@ -64,29 +77,28 @@ export function page0script() {
                     return;
                 }
             }
+
+            if (inp.name === "amplitudeVariation") {
+                if (Number(inp.value) > 100) {
+                    showToast("Medium volume probability must be <= 100")
+                    isOkay = false;
+                    return;
+                }
+            }
             localStorage.setItem(inp.name, inp.value);
         }
+        return isOkay;
+    }
+
+    document.getElementById("next-btn1").addEventListener("click", () => {
+        let isOkay = checkInputs(inputs);
         if (isOkay) {
             localStorage.setItem("currPage", 1);
             document.getElementById("dummy").click();
         }
     });
     document.getElementById("next-btn2").addEventListener("click", () => {
-        let isOkay = true;
-        for (const inp of inputs) {
-            if (!inp.value || inp.value.trim().length === 0) {
-                showToast("All inputs are required!");
-                isOkay = false;
-                return;
-            }
-            if (isNaN(inp.value)) {
-                showToast("Only enter numbers!");
-                isOkay = false;
-                return;
-            }
-            localStorage.setItem(inp.name, inp.value);
-
-        }
+        let isOkay = checkInputs(inputs);
         if (isOkay) {
             function getMatrix() {
                 const maxsubd = Number(localStorage.getItem("maxSubd"));
@@ -103,7 +115,7 @@ export function page0script() {
                 return matrix_inputs;
             }
             const matrix = localStorage.getItem("matrix");
-            if (!matrix) localStorage.setItem("matrix", JSON.stringify(getMatrix()));
+            if (!matrix || (JSON.parse(matrix)[0].length !== getMatrix()[0].length)) localStorage.setItem("matrix", JSON.stringify(getMatrix()));
             localStorage.setItem("currPage", 2);
             document.getElementById("dummy").click();
         }

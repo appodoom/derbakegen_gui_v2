@@ -44,15 +44,19 @@
                 </div>
                 <div class="step_1_input">
                     <span>What is the maximum subdivision of a beat?</span>
-                    <input type="text" name="maxSubd" placeholder="0-16" />
+                    <input type="text" name="maxSubd" placeholder="1-16" />
                 </div>
                 <div class="step_1_input">
-                    <span>Quantization:</span>
+                    <span>Quantization: (Default: 100)</span>
                     <input type="text" name="std" placeholder="0-100" />
                 </div>
                 <div class="step_1_input">
-                    <span>In BPM, what is the allowed tempo change?</span>
+                    <span>In BPM, what is the allowed tempo change? (Default: 0)</span>
                     <input type="text" name="tempoVariation" />
+                </div>
+                <div class="step_1_input">
+                    <span>What is the probability for a hit to have medium volume? (Default: 100)</span>
+                    <input type="text" name="amplitudeVariation" placeholder="0-100" />
                 </div>
             </div>
         </div>

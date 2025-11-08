@@ -250,7 +250,7 @@ def get_tempos(number_of_beats: int, initial_tempo: float, allowed_tempo_deviati
             deviation = random.uniform(
                 0, initial_tempo + allowed_tempo_deviation - current_tempo
             )
-            tempos.append(current_tempo - deviation)
+            tempos.append(max(1, current_tempo - deviation))
         else:  # Keep
             tempos.append(current_tempo)
         i += 1
@@ -340,21 +340,22 @@ def get_probability_dict(matrix: list, notes: list[str]) -> dict[str, list]:
         - float allowed_tempo_deviation: +- bpm by which the music is allowed to move
         - list[tuple[float, str]] skeleton: the skeleton of the cycle
         - list matrix: the variation matrix
+        - float amplitude_variation: probability for a hit to fall in the middle bin
 """
-def generate_derbouka(uuid: str, num_cycles: int, cycle_length: float, bpm: float, maxsubd: int, shift_proba: float, allowed_tempo_deviation: float,skeleton: list[tuple[float, str]], matrix: list) -> None:
+def generate_derbouka(uuid: str, num_cycles: int, cycle_length: float, bpm: float, maxsubd: int, shift_proba: float, allowed_tempo_deviation: float,skeleton: list[tuple[float, str]], matrix: list, amplitude_variation:float) -> None:
     # supported notes
     notes = ["D", "OTA", "OTI", "PA2"]
+    VOLUME=3
 
     # amplitude bins
     amplitudes = [
-        1,
-        2,
-        3,
-        4
+        0.1015*VOLUME,
+        0.5*VOLUME,
+        1*VOLUME
     ]
 
     # amplitude bins probabilities
-    amplitudes_proba_list = [0.43, 0.32, 0.12, 0.13]
+    amplitudes_proba_list = [(1-amplitude_variation)/2, amplitude_variation, (1-amplitude_variation)/2]
     # subdivisions probability vector
     subdiv_proba=matrix[0]
     # the rest of variation percentages

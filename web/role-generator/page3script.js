@@ -8,6 +8,7 @@ export async function page3script() {
         tempo: localStorage.getItem("tempo"),
         tempoVariation: localStorage.getItem("tempoVariation"),
         skeleton: localStorage.getItem("skeleton"),
+        amplitudeVariation: localStorage.getItem("amplitudeVariation")
     });
 
     const audioContainer = document.getElementById("audio-container");

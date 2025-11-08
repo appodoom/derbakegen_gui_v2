@@ -98,6 +98,12 @@ async def publish():
 @app.post('/api/generate/')
 async def serve_audio():
         data = request.get_json()
+        if "std" not in data or data.get("std") == None:
+            data["std"] = "0"
+        if "tempoVariation" not in data or data.get("tempoVariation") == None:
+            data["tempoVariation"] = "0"
+        if "amplitudeVariation" not in data or data.get("amplitudeVariation") == None:
+            data["amplitudeVariation"]="100"
 
         # parse data from frontend
         num_cycles = int(data.get("numOfCycles")) # number of cycles in the output
@@ -108,7 +114,9 @@ async def serve_audio():
         allowed_tempo_deviation=float(data.get("tempoVariation")) # allowed tempo change (+-)
         skeleton = data.get("skeleton") # skeleton format: [(delay, note)] where delay is in beats
         matrix = data.get("matrix") # variation matrix
+        amplitude_variation = float(data.get("amplitudeVariation"))
         shift_proba /= 100 # make it 0 -> 1
+        amplitude_variation/=100 # make it 0 -> 1
         if isinstance(skeleton, str):
             skeleton = json.loads(skeleton)
 
@@ -127,7 +135,8 @@ async def serve_audio():
         shift_proba,
         allowed_tempo_deviation,
         skeleton,
-        matrix
+        matrix,
+        amplitude_variation,
         )
 
         metadata = {
@@ -139,7 +148,8 @@ async def serve_audio():
             "shift_proba":shift_proba,
             "allowed_tempo_deviation":allowed_tempo_deviation,
             "skeleton":skeleton,
-            "matrix":matrix
+            "matrix":matrix,
+            "amplitudeVariation": amplitude_variation
         }
 
         os.makedirs("./data", exist_ok=True)
