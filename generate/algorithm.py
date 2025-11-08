@@ -5,23 +5,21 @@ from config_skeleton import get_audio_data_skeleton
 import soundfile as sf
 import random
 
-def apply_cross_fade(hit_audio, fade_samples=500):
-    """Apply exponential cross-fade to beginning and end of audio."""
-    if len(hit_audio) <= fade_samples * 4:
-        fade_samples = len(hit_audio) // 4
-
-    # Exponential fade-in: from near 0 to 1
-    fade_in = np.exp(np.linspace(-4, 0, fade_samples))
-    fade_in = (fade_in - fade_in.min()) / (fade_in.max() - fade_in.min())
-
-    # Exponential fade-out: from 1 to near 0
-    fade_out = np.exp(np.linspace(0, -4, fade_samples))
-    fade_out = (fade_out - fade_out.min()) / (fade_out.max() - fade_out.min())
-
+def apply_cross_fade(hit_audio, fade_samples=1000, attack_preserve=0):
+    if len(hit_audio) <= fade_samples * 2:
+        fade_samples = max(8, len(hit_audio) // 4)
+    
     hit_audio = hit_audio.copy()
+    
+    # Cosine fade-in (very smooth attack)
+    fade_in = 0.5 * (1 - np.cos(np.linspace(0, np.pi, fade_samples)))
+    
+    # Cosine fade-out (very smooth release)
+    fade_out = 0.5 * (1 + np.cos(np.linspace(0, np.pi, fade_samples)))
+    
     hit_audio[:fade_samples] *= fade_in
-    hit_audio[-fade_samples:] *= fade_out  # reverse to make it decay
-
+    hit_audio[-fade_samples:] *= fade_out
+    
     return hit_audio
 
 def get_random_proba_list(weights):
@@ -101,8 +99,8 @@ def subdivisions_generator(
         else:
             # hit_y = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
             hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
-            hit_y = apply_cross_fade(hit_y_raw)
-            add_len = min(len(hit_y), remaining)
+            add_len = min(len(hit_y_raw), remaining)
+            hit_y = apply_cross_fade(hit_y_raw[:add_len])
             no_overlap = True
             for start, _ in added_hits_intervals:
                 if start <= curr_sample  and curr_sample < start + maxsubd_length_arr[index_of_curr_subd_in_beat]:
