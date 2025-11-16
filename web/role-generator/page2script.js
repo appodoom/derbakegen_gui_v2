@@ -330,9 +330,7 @@ export function page2script() {
     }
 
     function getSkeletonFromMarkers(markers) {
-        let sorted = markers.sort((a, b) => a.beat - b.beat);
-
-        // console.log(sorted);
+        let sorted = markers.sort((a, b) => a.beat - b.beat); //[{beat: 9.5, sound: doom}]
 
         let output = [];
         let old_beat = 0;
@@ -341,7 +339,7 @@ export function page2script() {
             output.push([new_beat, symbolMap[sound]]);
             old_beat = beat;
         }
-        output[0][0] = nBeats - markers[markers.length - 1].beat;
+        output[0][0] = nBeats - markers[markers.length - 1].beat + output[0][0];
         return output;
     }
 

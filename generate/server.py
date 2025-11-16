@@ -48,8 +48,9 @@ async def publish():
     data_dir = "./data"
     wav_path = os.path.join(data_dir, f"{audioid}.wav")
     json_path = os.path.join(data_dir, f"{audioid}.json")
+    derbake_path = os.path.join(data_dir, f"{audioid}.derbake")
 
-    if not os.path.exists(wav_path) or not os.path.exists(json_path):
+    if not os.path.exists(wav_path) or not os.path.exists(json_path) or not os.path.exists(derbake_path):
         return jsonify({"error": "Audio or metadata file not found"}), 404
 
     try:
@@ -69,6 +70,8 @@ async def publish():
         ) as s3:
             async with aiofiles.open(wav_path, "rb") as audio_file:
                 await s3.upload_fileobj(audio_file, S3_BUCKET, f"{audioid}.wav")
+            async with aiofiles.open(derbake_path, "rb") as derbake_file:
+                await s3.upload_fileobj(derbake_file, S3_BUCKET, f"{audioid}.derbake")
 
         s3_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{audioid}.wav"
 
@@ -85,7 +88,8 @@ async def publish():
         # Delete files asynchronously
         await asyncio.gather(
             asyncio.to_thread(os.remove, wav_path),
-            asyncio.to_thread(os.remove, json_path)
+            asyncio.to_thread(os.remove, json_path),
+            asyncio.to_thread(os.remove, derbake_path)
         )
 
         return "OK", 200

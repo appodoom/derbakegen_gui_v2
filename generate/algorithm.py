@@ -5,7 +5,7 @@ from config_skeleton import get_audio_data_skeleton
 import soundfile as sf
 import random
 
-def apply_cross_fade(hit_audio, fade_samples=1000, attack_preserve=0):
+def apply_cross_fade(hit_audio, fade_samples=500, attack_preserve=0):
     if len(hit_audio) <= fade_samples * 2:
         fade_samples = max(8, len(hit_audio) // 4)
     
@@ -42,88 +42,115 @@ def subdivisions_generator(
     sr=48000,
 ):
     subdiv_array = []
+    tokens = []
+    
+    # Initialize tempo tracking
+    current_tempo = tempos[0]
+    
     for i in range(len(subdiv_proba)):
         subdiv_array.append(i)
+        
     if sum(subdiv_proba) == 0:
-        return y, []
-    # subdiv_array [0, 1, 2, 3]
-    # subdiv_proba [p4,p3,p2,p1]
+        return y, [], ""
+        
     maxsubdi = random.choices(population=subdiv_array, weights=subdiv_proba, k=1)[0]
-
     added_hits_intervals = sorted(added_hits_intervals, key=lambda x: x[0])
     subdivisions_y = np.zeros(len(y))
 
     curr_sample = 0
-    beat_length_in_samples = int(60 * sr / tempos[0]) # first beat
+    tempo_index = 0
+    beat_index = 0
 
     chosen_div = maxsubd - maxsubdi
-
-    maxsubd_length_arr = [ int(beat_length_in_samples / (chosen_div)) for _ in range(chosen_div - 1)]
+    tokens.append(f"SUBD_{chosen_div}")
+    
+    # Calculate beat length for current tempo
+    beat_length_in_samples = int(60 * sr / current_tempo)
+    maxsubd_length_arr = [int(beat_length_in_samples / chosen_div) for _ in range(chosen_div - 1)]
     maxsubd_length_arr.append(beat_length_in_samples - sum(maxsubd_length_arr))
+    
     hits = list(hit_probabilities[maxsubdi].keys())
     weights = list(hit_probabilities[maxsubdi].values())
     new_added_hits_intervals = []
+    
     j = 0
     index_of_curr_subd_in_beat = 0
     sample_of_last_beat = 0
+    
     while curr_sample < len(subdivisions_y):
-        if curr_sample == sample_of_last_beat + beat_length_in_samples:#new beat
+        # Check if we need to update tempo (new beat)
+        if curr_sample >= sample_of_last_beat + beat_length_in_samples:
+            beat_index += 1
             index_of_curr_subd_in_beat = 0
-            j += 1
-            if j < len(tempos):  # Safety check
-                beat_length_in_samples = int(60 * sr / tempos[j])
+            sample_of_last_beat = curr_sample
             
-            # Get new random maxsubdi for the new beat
+            # Update tempo if available
+            if beat_index < len(tempos):
+                new_tempo = tempos[beat_index]
+                if new_tempo != current_tempo:
+                    tempo_diff = new_tempo - current_tempo
+                    current_tempo = new_tempo
+                
+                beat_length_in_samples = int(60 * sr / current_tempo)
+            
+            # Get new random subdivision for the new beat
             maxsubdi = random.choices(population=subdiv_array, weights=subdiv_proba, k=1)[0]
-
             chosen_div = maxsubd - maxsubdi
-
-            maxsubd_length_arr = [ int(beat_length_in_samples / (chosen_div)) for _ in range(chosen_div - 1)]
+            tokens.append(f"SUBD_{chosen_div}")
+            maxsubd_length_arr = [int(beat_length_in_samples / chosen_div) for _ in range(chosen_div - 1)]
             maxsubd_length_arr.append(beat_length_in_samples - sum(maxsubd_length_arr))
 
             hits = list(hit_probabilities[maxsubdi].keys())
             weights = list(hit_probabilities[maxsubdi].values())
-            
-            # Update the last beat sample to the current position
-            sample_of_last_beat = curr_sample
         
         remaining = len(subdivisions_y) - curr_sample
         random_proba_list = get_random_proba_list(weights)
         chosen_hit = random.choices(hits, weights=random_proba_list, k=1)[0]
-        choosen_amplitude = random.choices(
+        chosen_amplitude = random.choices(
             population=amplitudes, weights=amplitudes_proba_list, k=1
         )[0]
-
+        
         if chosen_hit == "S":
-            curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat] # check add length
-        else:
-            # hit_y = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
-            hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
-            add_len = min(len(hit_y_raw), remaining)
-            hit_y = apply_cross_fade(hit_y_raw[:add_len])
             no_overlap = True
-            for start, _ in added_hits_intervals:
-                if start <= curr_sample  and curr_sample < start + maxsubd_length_arr[index_of_curr_subd_in_beat]:
-                    curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
+            for start, end in added_hits_intervals:
+                if start <= curr_sample < end:
                     no_overlap = False
                     break
             if no_overlap:
-                subdivisions_y[curr_sample : curr_sample + add_len] += (
-                    choosen_amplitude * (hit_y[:add_len])
+                tokens.append(f"HIT_{chosen_hit}")
+                tokens.append(f"AMP_{chosen_amplitude}")
+            curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
+        else:
+            hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
+            add_len = min(len(hit_y_raw), remaining)
+            hit_y = apply_cross_fade(hit_y_raw[:add_len])
+            
+            no_overlap = True
+            for start, end in added_hits_intervals:
+                if start <= curr_sample < end:
+                    curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
+                    no_overlap = False
+                    break
+                    
+            if no_overlap:
+                subdivisions_y[curr_sample:curr_sample + add_len] += (
+                    chosen_amplitude * hit_y[:add_len]
                 )
                 new_added_hits_intervals.append(
-                    (
-                        curr_sample,
-                        curr_sample + add_len,
-                    )
+                    (curr_sample, curr_sample + add_len)
                 )
                 curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
+                tokens.append(f"HIT_{chosen_hit}")
+                tokens.append(f"AMP_{chosen_amplitude}")
+            else:
+                tokens.append(f"HIT_S")
+                tokens.append(f"AMP_{chosen_amplitude}")
 
         index_of_curr_subd_in_beat += 1
 
     y += subdivisions_y
     new_added_hits_intervals.extend(added_hits_intervals)
-    return y, new_added_hits_intervals
+    return y, new_added_hits_intervals, " ".join(tokens)
 
 
 # TODO: REDO (WRONG UNDERSTANDING)
@@ -148,33 +175,43 @@ def get_window_by_beat(expected_hit_timestamp: int, beat_len: int) -> tuple[int,
 """
     skeleton_generator generates an audio of desired length just playing the skeleton provided
 """
-def skeleton_generator(amplitude: float, skeleton: list[tuple[float, str]], num_cycles: int, tempos: list[float], shift_proba: float, sr=48000) -> tuple[npt.NDArray,int,list[tuple[int, int]]]:
-    beat_length_in_samples = int((60 / tempos[0]) * sr) # first beat length
+def skeleton_generator(amplitude: float, skeleton: list[tuple[float, str]], num_cycles: int, tempos: list[float], shift_proba: float, sr=48000) -> tuple[npt.NDArray,int,list[tuple[int, int]], list[str]]:
+    # Initialize with first tempo
+    current_tempo = tempos[0]
+    beat_length_in_samples = int((60 / current_tempo) * sr)
     skeleton_length = len(skeleton)
     num_of_beats_in_audio = num_cycles * sum(x[0] for x in skeleton)
-
-    # [(1, D), (2.5, T), (2, S)]
+    tokens = []
+    
+    # Track tempo tokens - start with initial tempo difference (0.0)
+    
     skeleton_hits_intervals = []
     y = np.zeros(0, dtype=np.float32)
 
     expected_hit_timestamp = 0
     curr_beat = i = 0
+    tempo_index = 0  # Track which tempo we're using
 
     while curr_beat < num_of_beats_in_audio:
-        beat = skeleton[i % skeleton_length][0] # delay beat
-        curr_beat += beat
+        beat_duration = skeleton[i % skeleton_length][0]  # delay in beats
+        curr_beat += beat_duration
+        
+        # Update tempo if we've moved to a new beat index
+        if int(curr_beat) > tempo_index and int(curr_beat) < len(tempos):
+            tempo_index = int(curr_beat)
+            new_tempo = tempos[tempo_index]
+            tempo_diff = new_tempo - current_tempo
+            current_tempo = new_tempo
+            beat_length_in_samples = int((60 / current_tempo) * sr)
 
-        # get length for each beat (depending on tempos)
-        if curr_beat % 1 == 0 and len(tempos) > int(curr_beat - 1):
-            beat_length_in_samples = int((60 / tempos[int(curr_beat - 1)]) * sr)
-
-        curr_hit = skeleton[i % skeleton_length][1] #get the hit
-        # get the y of the hit
-        # y_hit = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
+        tokens.append(f"DELAY_{beat_duration}")
+        curr_hit = skeleton[i % skeleton_length][1]
+        
         y_hit_raw = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
         y_hit = apply_cross_fade(y_hit_raw)
-
-        expected_hit_timestamp += int(beat * beat_length_in_samples)
+        tokens.append(f"HIT_{curr_hit}")
+        
+        expected_hit_timestamp += int(beat_duration * beat_length_in_samples)
         
         start_of_window, end_of_window = get_window_by_beat(
             expected_hit_timestamp, beat_length_in_samples
@@ -182,24 +219,29 @@ def skeleton_generator(amplitude: float, skeleton: list[tuple[float, str]], num_
         adjusted_hit_timestamp = get_deviated_sample(
             start_of_window, end_of_window, expected_hit_timestamp, shift_proba
         )
+        
+        deviation_samples = adjusted_hit_timestamp - expected_hit_timestamp
+        tokens.append(f"DEV_{deviation_samples}")
+        
         end_of_hit_timestamp = adjusted_hit_timestamp + len(y_hit)
-        # padding and adding the hit
-        if end_of_hit_timestamp > y.size:
-            pad_len = end_of_hit_timestamp - y.size
+        
+        # Padding and adding the hit
+        if end_of_hit_timestamp > len(y):
+            pad_len = end_of_hit_timestamp - len(y)
             y = np.pad(y, (0, pad_len), mode="constant")
-        np.concatenate((y, np.zeros(end_of_hit_timestamp - adjusted_hit_timestamp + 1)))
-        y[adjusted_hit_timestamp:end_of_hit_timestamp] += y_hit
+        
+        y[adjusted_hit_timestamp:end_of_hit_timestamp] += amplitude * y_hit
         skeleton_hits_intervals.append((adjusted_hit_timestamp, end_of_hit_timestamp))
         i += 1
 
-    y *= amplitude
+    # Return from first hit timestamp
+    start_time = skeleton_hits_intervals[0][0] if skeleton_hits_intervals else 0
     return (
-        y[skeleton_hits_intervals[0][0]:],
+        y[start_time:],
         beat_length_in_samples,
         skeleton_hits_intervals,
+        " ".join(tokens)
     )
-
-
 
 """
     get_subdivision_hit_probabilities is a utility function that transforms the matrix into a list of dictionaries where
@@ -275,7 +317,8 @@ def get_tempos(number_of_beats: int, initial_tempo: float, allowed_tempo_deviati
         else:  # Keep
             tempos.append(current_tempo)
         i += 1
-    return tempos
+
+    return tempos, " ".join([str(i) for i in tempos])
 
 
 """
@@ -299,7 +342,7 @@ def merge_skeleton_with_variations(
     num_of_beats = num_cycles * sum(float(x[0]) for x in skeleton)
 
     # get the list of tempos for every beat
-    tempos = get_tempos(
+    tempos, tempo_tokens = get_tempos(
         number_of_beats=num_of_beats, initial_tempo=bpm, allowed_tempo_deviation=allowed_tempo_deviation
     )
 
@@ -315,7 +358,7 @@ def merge_skeleton_with_variations(
     )
 
 
-    y, beat_length_in_samples, added_hits_intervals = skeleton_generator(
+    y, beat_length_in_samples, added_hits_intervals, skeleton_tokens = skeleton_generator(
         shift_proba=shift_proba,
         amplitude=amplitudes[-1], # always play at highest amplitude
         skeleton=skeleton,
@@ -323,7 +366,7 @@ def merge_skeleton_with_variations(
         sr=sr,
         tempos=tempos,
     )
-    y, added_hits_intervals = subdivisions_generator(
+    y, added_hits_intervals, var_tokens = subdivisions_generator(
         y=y,
         maxsubd=maxsubd,
         amplitudes=amplitudes,
@@ -334,7 +377,8 @@ def merge_skeleton_with_variations(
         subdiv_proba=subdiv_proba,
         tempos=tempos,
     )
-    return y
+
+    return y, tempo_tokens + "\n" + skeleton_tokens + "\n" + var_tokens
 
 
 """
@@ -366,7 +410,7 @@ def get_probability_dict(matrix: list, notes: list[str]) -> dict[str, list]:
 def generate_derbouka(uuid: str, num_cycles: int, cycle_length: float, bpm: float, maxsubd: int, shift_proba: float, allowed_tempo_deviation: float,skeleton: list[tuple[float, str]], matrix: list, amplitude_variation:float) -> None:
     # supported notes
     notes = ["D", "OTA", "OTI", "PA2"]
-    VOLUME=3
+    VOLUME= 3
 
     # amplitude bins
     amplitudes = [
@@ -383,7 +427,7 @@ def generate_derbouka(uuid: str, num_cycles: int, cycle_length: float, bpm: floa
     matrix = matrix[1:]
     probabilities_dict = get_probability_dict(matrix=matrix, notes=notes)
 
-    y_generated = merge_skeleton_with_variations(
+    y_generated, tokens = merge_skeleton_with_variations(
         amplitudes=amplitudes,
         amplitudes_proba_list=amplitudes_proba_list,
         shift_proba=shift_proba,
@@ -396,5 +440,8 @@ def generate_derbouka(uuid: str, num_cycles: int, cycle_length: float, bpm: floa
         cycle_length=cycle_length,
         allowed_tempo_deviation=allowed_tempo_deviation
     )
+
+    with open(f"./data/{uuid}.derbake", "w") as f:
+        f.write(str(bpm) + "\n" + tokens)
     # writing the result
     sf.write(f"./data/{uuid}.wav", data=y_generated, samplerate=48000)
