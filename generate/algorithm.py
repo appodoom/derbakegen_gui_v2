@@ -111,14 +111,8 @@ def subdivisions_generator(
         )[0]
         
         if chosen_hit == "S":
-            no_overlap = True
-            for start, end in added_hits_intervals:
-                if start <= curr_sample < end:
-                    no_overlap = False
-                    break
-            if no_overlap:
-                tokens.append(f"HIT_{chosen_hit}")
-                tokens.append(f"AMP_{chosen_amplitude}")
+            tokens.append(f"HIT_{chosen_hit}")
+            tokens.append(f"AMP_{chosen_amplitude}")
             curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
         else:
             hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
