@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const path = require("path");
 const uuid4 = require("uuid4");
 const jwt = require('jsonwebtoken');
-const AWS = require('aws-sdk');
+const {S3Client, GetObjectCommand} = require('@aws-sdk/client-s3');
 const cookieParser = require("cookie-parser");
 const { Op } = require("sequelize");
 const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN, INFER } = require("./paths.js");
@@ -14,13 +14,15 @@ const { validate, getUserId } = require("./utils");
 require("dotenv").config({ path: "../.env" });
 const { Rating, Question, User, Sound, sequelize } = require("./db/schemas.js");
 const { log, generatorRoleRequired, ratorRoleRequired, findRole, adminRoleRequired } = require("./middlewares");
-AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.S3_REGION
-});
+const { pipeline } = require("stream");
 
-const s3 = new AWS.S3();
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  }
+});
 
 const app = express();
 app.use(cors({ origin: "*" }))
@@ -38,7 +40,7 @@ app.get("/web/test/", (req, res) => {
     --------------------    API    ---------------------
 */
 const cookieoptions = {
-    magAge: 3 * 24 * 3600 * 1000, // 3 days
+    maxAge: 3 * 24 * 3600 * 1000, // 3 days
     httpOnly: true,
     path: "/", // very important
     sameSite: "lax"
@@ -166,11 +168,14 @@ app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
         const urlObj = new URL(url);
         const bucket = urlObj.hostname.split('.')[0];
         const key = urlObj.pathname.substring(1);
-
-        const s3Object = await s3.getObject({
+        
+        const command = new GetObjectCommand({
             Bucket: bucket,
             Key: key
-        }).promise();
+        })
+
+        const s3Object = await s3.send(command);
+
 
         res.setHeader('Content-Type', 'audio/wav');
         res.setHeader('Content-Disposition', 'inline; filename="audio.wav"');
@@ -178,7 +183,7 @@ app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('X-Audio-ID', randomSound.id);
 
-        res.send(s3Object.Body);
+        await pipeline(s3Object.Body, res);
 
     } catch (e) {
         console.error('Error fetching random audio:', e);
