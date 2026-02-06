@@ -70,10 +70,14 @@
                                 Selected: <span id="currentSound">Doom</span>
                             </div>
                         </div>
-                        <div class="button-row">
-                            <button id="playSkeleton">Play Cycle</button>
-                            <button id="clearMarkers" class="secondary-btn">Clear All</button>
-                            <button id="appendCycle" class="success-btn">Append Cycle</button>
+                        <div class="button-group">
+                            <div class="action-buttons">
+                                <button id="playSkeleton" class="btn primary-btn">Play Cycle</button>
+                                <button id="appendCycle" class="btn primary-btn">Add to input</button>
+                            </div>
+                            <div class="control-buttons">
+                                <button id="clearMarkers" class="btn secondary-btn">Clear Markers</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,7 +87,7 @@
                 <div class="sheet-header">
                     <h3>Composition</h3>
                     <div class="sheet-controls">
-                        <button id="playComposition" class="play-all-btn">▶ Play All</button>
+                        <button id="playComposition" class="primary-btn">▶ Play All</button>
                         <button id="clearComposition" class="secondary-btn">Clear Sheet</button>
                     </div>
                 </div>

@@ -100,7 +100,10 @@ body {
     width: 100%;
     min-height: calc(100vh - 120px);
     transition: var(--transition);
-    position: relative;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform: translate(-50%,-50%);
 }
 
 .main_content_title {
@@ -474,29 +477,6 @@ body {
     color: var(--primary);
 }
 
-#playSkeleton {
-    background: var(--success);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    font-family: "Inter", sans-serif;
-    font-weight: 600;
-    transition: var(--transition);
-    box-shadow: var(--shadow-md);
-    min-width: 80px;
-}
-
-#playSkeleton:hover {
-    background: color-mix(in srgb, var(--success) 80%, black);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
-}
-
-#playSkeleton:active {
-    transform: translateY(0);
-}
 
 .main_content_inputs.left {
     background: var(--surface);
@@ -559,29 +539,6 @@ body {
     color: var(--text);
 }
 
-#clearMarkers {
-    background: var(--error);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    font-family: "Inter", sans-serif;
-    font-weight: 600;
-    transition: var(--transition);
-    box-shadow: var(--shadow-md);
-    min-width: 80px;
-}
-
-#clearMarkers:hover {
-    background: color-mix(in srgb, var(--error) 80%, black);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
-}
-
-#clearMarkers:active {
-    transform: translateY(0);
-}
 
 /* ===== COMPOSITION CONTAINER ===== */
 .composition-container {
@@ -640,31 +597,7 @@ body {
 }
 
 /* Button Styles */
-.success-btn {
-    background: var(--success);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--space-sm) var(--space-md);
-    cursor: pointer;
-    font-family: "Inter", sans-serif;
-    font-weight: 600;
-    transition: var(--transition);
-    box-shadow: var(--shadow-md);
-    min-width: 80px;
-}
-
-.success-btn:hover {
-    background: color-mix(in srgb, var(--success) 80%, black);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-lg);
-}
-
-.success-btn:active {
-    transform: translateY(0);
-}
-
-.play-all-btn {
+.primary-btn {
     background: var(--primary);
     color: white;
     border: none;
@@ -678,7 +611,7 @@ body {
     min-width: 100px;
 }
 
-.play-all-btn:hover {
+.primary-btn:hover {
     background: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-lg);
@@ -1017,4 +950,40 @@ body {
 
 [data-theme="dark"] .cycle-display.playing {
     background: rgba(52, 152, 219, 0.1);
+}
+
+.secondary-btn{
+    background: var(--error);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    min-width: 80px;
+}
+
+.secondary-btn:hover {
+    background: color-mix(in srgb, var(--error) 80%, black);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+.secondary-btn:active {
+    transform: translateY(0);
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
+.action-buttons, .control-buttons {
+    display: flex;
+    gap: var(--space-sm);
 }
