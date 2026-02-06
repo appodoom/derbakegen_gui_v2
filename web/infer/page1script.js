@@ -231,8 +231,8 @@ export function page1script(p) {
         const angle = Math.atan2(y, x) + Math.PI / 2; // shift bottom=0
         hoverBeat = angleToBeat(angle);
 
-        tooltip.textContent = "Beat: " + hoverBeat.toFixed(2);
-        tooltip.style.display = "block";
+        // tooltip.textContent = "Beat: " + hoverBeat.toFixed(2);
+        // tooltip.style.display = "block";
 
         draw();
     });
