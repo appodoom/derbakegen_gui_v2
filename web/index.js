@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const cookieParser = require("cookie-parser");
 const { Op } = require("sequelize");
-const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN } = require("./paths.js");
+const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN, INFER } = require("./paths.js");
 const { validate, getUserId } = require("./utils");
 require("dotenv").config({ path: "../.env" });
 const { Rating, Question, User, Sound, sequelize } = require("./db/schemas.js");
@@ -344,6 +344,7 @@ app.get("/web/logout/", (req, res) => {
 */
 
 app.use("/web/login/", express.static(LOGIN));
+app.use("/web/infer/", express.static(INFER));
 app.use("/web/generate/", generatorRoleRequired, express.static(GENERATE));
 app.use("/web/rate/", ratorRoleRequired, express.static(RATE));
 app.use("/web/admin/", adminRoleRequired, express.static(ADMIN));

@@ -9,7 +9,7 @@ def play_from_dotderbake(file_path):
 
     lines = data.split("\n")
 
-    if len(lines) != 4:
+    if len(lines) < 4:
         print("Wrong format")
         return
 
@@ -158,4 +158,7 @@ def regenerate(initial_tempo, tempos, skeleton_tokens, var_tokens, sr=48000):
     y = subdivisions_regenerator(var_tokens, tempos, y_sk, skeleton_hits_intervals)
     sf.write("regenerated.wav", data=y, samplerate=48000)
 
-play_from_dotderbake("./data/s.derbake")
+#for i in range(30):
+ #   play_from_dotderbake(f"./data/{i}.derbake")
+  #  print(f"done {i}")
+play_from_dotderbake("test.derbake")
