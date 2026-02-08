@@ -848,7 +848,8 @@ body {
     width: 100%;
 }
 
-.action-buttons, .control-buttons {
+.action-buttons,
+.control-buttons {
     display: flex;
     gap: var(--space-sm);
     flex-wrap: wrap;
@@ -875,7 +876,9 @@ body {
 }
 
 @keyframes glow {
-    0%, 100% {
+
+    0%,
+    100% {
         filter: brightness(1);
         box-shadow: var(--shadow-md);
     }
@@ -956,7 +959,7 @@ body {
         width: 100%;
         order: 1;
     }
-    
+
     .music-sheet {
         max-height: 500px;
     }
@@ -979,25 +982,26 @@ body {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .button-group {
         flex-direction: column;
         gap: var(--space-md);
     }
-    
-    .action-buttons, .control-buttons {
+
+    .action-buttons,
+    .control-buttons {
         justify-content: center;
         width: 100%;
     }
-    
+
     .editor-panel {
         padding: var(--space-lg);
     }
-    
+
     .sheet-panel {
         padding: var(--space-lg);
     }
-    
+
     .music-sheet {
         max-height: 400px;
     }
@@ -1008,23 +1012,575 @@ body {
         padding: var(--space-lg) var(--space-sm);
         gap: var(--space-lg);
     }
-    
+
     .composition-container {
         margin-top: var(--space-md);
         margin-bottom: var(--space-lg);
     }
-    
+
     .cycle-display {
         padding: var(--space-md);
     }
-    
+
     .beat-timeline {
         min-height: 80px;
     }
-    
+
     .sound-marker {
         width: 20px;
         height: 20px;
         font-size: 0.5rem;
     }
+}
+
+.user-menu-container {
+    position: fixed;
+    top: var(--space-md);
+    left: var(--space-md);
+    z-index: 1000;
+}
+
+.user-menu-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--text);
+}
+
+.user-menu-toggle:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+.username {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.dropdown-arrow {
+    font-size: 0.7rem;
+    transition: var(--transition);
+    color: var(--text-light);
+}
+
+.user-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--space-xs);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-xl);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+}
+
+.user-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-content {
+    padding: var(--space-sm) 0;
+}
+
+.dropdown-content a {
+    display: flex;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text);
+    text-decoration: none;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.dropdown-content a:hover {
+    background: var(--accent);
+    color: var(--primary);
+}
+
+.dropdown-content a:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+
+.user-menu-toggle.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* ===== ZOOM MODAL STYLES ===== */
+.zoom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+.zoom-modal.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.zoom-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1;
+}
+
+.zoom-modal-content {
+    position: relative;
+    z-index: 2;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 1200px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.zoom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border);
+    background: var(--background);
+}
+
+.zoom-modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.zoom-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: var(--space-xs);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-close-btn:hover {
+    background: var(--accent);
+    color: var(--error);
+}
+
+/* New layout container */
+.zoom-main-container {
+    display: flex;
+    padding: var(--space-lg);
+    gap: var(--space-xl);
+    background: var(--background);
+    min-height: 500px;
+    overflow: auto;
+    flex: 1;
+}
+
+.zoom-canvas-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-canvas-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+#zoomCircle {
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+#zoomCircle:hover {
+    border-color: var(--primary);
+}
+
+/* Zoom controls section */
+.zoom-controls-section {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+/* Zoom sounds panel */
+.zoom-sounds-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.zoom-sounds-panel h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.zoom-sound-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.zoom-sound-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    color: var(--text);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: "Inter", sans-serif;
+    font-size: 0.95rem;
+    text-align: left;
+    font-weight: 500;
+}
+
+.zoom-sound-btn:hover {
+    background: var(--accent);
+    transform: translateX(2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.zoom-sound-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.zoom-sound-btn .color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+}
+
+.zoom-current-selection {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    text-align: center;
+    padding: var(--space-md);
+    background: var(--accent);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+#zoomCurrentSound {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+/* Zoom actions panel */
+.zoom-actions-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.zoom-actions-panel .btn {
+    width: 100%;
+    padding: var(--space-md);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.zoom-snap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: var(--space-md);
+}
+
+#zoomSnapSelect {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    color: var(--text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: "Inter", sans-serif;
+}
+
+#zoomSnapSelect:hover {
+    border-color: var(--border-strong);
+}
+
+#zoomSnapSelect:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .zoom-modal-content {
+        max-width: 95%;
+    }
+
+    .zoom-main-container {
+        flex-direction: column;
+    }
+
+    .zoom-controls-section {
+        flex: none;
+        width: 100%;
+        flex-direction: row;
+        gap: var(--space-xl);
+    }
+
+    .zoom-sounds-panel,
+    .zoom-actions-panel {
+        flex: 1;
+    }
+
+    #zoomCircle {
+        width: 500px;
+        height: 500px;
+    }
+}
+
+@media (max-width: 992px) {
+    .zoom-controls-section {
+        flex-direction: column;
+    }
+
+    #zoomCircle {
+        width: 400px;
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .zoom-modal {
+        padding: var(--space-md);
+    }
+
+    .zoom-modal-content {
+        max-height: 85vh;
+    }
+
+    .zoom-main-container {
+        padding: var(--space-md);
+        gap: var(--space-lg);
+    }
+
+    .zoom-canvas-container {
+        padding: var(--space-md);
+    }
+
+    #zoomCircle {
+        width: 350px;
+        height: 350px;
+    }
+
+    .zoom-controls-section {
+        gap: var(--space-lg);
+    }
+
+    .zoom-sounds-panel,
+    .zoom-actions-panel {
+        padding: var(--space-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .zoom-modal-header {
+        flex-direction: column;
+        gap: var(--space-sm);
+        text-align: center;
+        padding: var(--space-md);
+    }
+
+    #zoomCircle {
+        width: 280px;
+        height: 280px;
+    }
+
+    .zoom-sound-btn {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.9rem;
+    }
+
+    .zoom-sounds-panel h4 {
+        font-size: 1rem;
+    }
+}
+
+/* ===== ZOOM BUTTON STYLES ===== */
+.canvas-container {
+    position: relative;
+    display: inline-block;
+}
+
+.zoom-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+    padding: 0;
+}
+
+.zoom-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-lg);
+}
+
+.zoom-btn:active {
+    transform: scale(0.95);
+}
+
+/* Alternative positioning options */
+/* Zoom button positioning */
+.canvas-container {
+    position: relative;
+    display: inline-block;
+}
+
+.zoom-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-md);
+    z-index: 10;
+}
+
+.zoom-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+    border-color: var(--primary);
+}
+
+.zoom-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Dark theme */
+[data-theme="dark"] .zoom-btn {
+    background: var(--surface);
+    border-color: var(--border-strong);
+}
+
+[data-theme="dark"] .zoom-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
 }

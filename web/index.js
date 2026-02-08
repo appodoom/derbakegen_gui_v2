@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const path = require("path");
 const uuid4 = require("uuid4");
 const jwt = require('jsonwebtoken');
-const {S3Client, GetObjectCommand} = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const cookieParser = require("cookie-parser");
 const { Op } = require("sequelize");
 const { GENERATE, RATE, PAGE_404, LOGIN, WAIT_ROOM, ADMIN, INFER } = require("./paths.js");
@@ -17,11 +17,11 @@ const { log, generatorRoleRequired, ratorRoleRequired, findRole, adminRoleRequir
 const { pipeline } = require("stream");
 
 const s3 = new S3Client({
-  region: process.env.S3_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-  }
+    region: process.env.S3_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
 });
 
 const app = express();
@@ -49,8 +49,7 @@ const cookieoptions = {
 app.get('/web/api/me/', async (req, res) => {
 
     if (!req.cookies || !req.cookies.token) {
-        res.status(403);
-        res.redirect("/web/login/");
+        res.status(200).json({ "username": "Guest", "Login": "/web/login/", "Test model": "/web/infer/" });
         return;
     }
 
@@ -58,20 +57,18 @@ app.get('/web/api/me/', async (req, res) => {
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
     if (!decoded || !decoded.id) {
-        res.status(403);
-        res.redirect("/web/login/");
+        res.status(200).json({ "username": "Guest", "Login": "/web/login/", "Test model": "/web/infer/" });
         return;
     }
 
     try {
         const user = await User.findOne({ where: { id: decoded.id } });
         if (!user) {
-            res.status(403);
-            res.redirect("/web/login/");
+            res.status(200).json({ "username": "Guest", "Login": "/web/login/", "Test model": "/web/infer/" });
             return;
         }
 
-        let out = { "username": user.username, "Logout": "/web/logout/" };
+        let out = { "username": user.username, "Logout": "/web/logout/", "Test model": "/web/infer/" };
         switch (user.role) {
             case "rate":
                 out["Rate"] = "/web/rate/";
@@ -168,7 +165,7 @@ app.get("/web/api/random_audio/", ratorRoleRequired, async (req, res) => {
         const urlObj = new URL(url);
         const bucket = urlObj.hostname.split('.')[0];
         const key = urlObj.pathname.substring(1);
-        
+
         const command = new GetObjectCommand({
             Bucket: bucket,
             Key: key

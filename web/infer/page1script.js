@@ -49,7 +49,7 @@ export function page1script(p) {
     const cy = canvas.height / 2;
     const radius = 75;
 
-    const markers = [];
+    let markers = [];
     let hoverBeat = null;
     let selectedSound = "Doom";
     let stopLoop = null;
@@ -260,8 +260,8 @@ export function page1script(p) {
     });
 
     // ===== AUDIO SYSTEM =====
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
+    const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+
     // Load audio buffers
     async function loadAudioFile(url) {
         try {
@@ -326,7 +326,7 @@ export function page1script(p) {
                 source.buffer = sound;
                 source.connect(audioCtx.destination);
                 source.start(playTime);
-                
+
                 const now = audioCtx.currentTime;
                 const delay = (playTime - now) * 1000;
                 setTimeout(() => {
@@ -363,11 +363,11 @@ export function page1script(p) {
             return;
         }
         if (markers.length > 5 && !confirm(`Clear all ${markers.length} markers?`)) return;
-        
+
         const markerCount = markers.length;
         markers.length = 0;
         draw();
-        
+
         if (stopLoop) {
             clearInterval(stopLoop);
             stopLoop = null;
@@ -542,21 +542,21 @@ export function page1script(p) {
     function playSingleCycle(cycleIndex) {
         if (cycleIndex < 0 || cycleIndex >= composition.length) return;
         stopPlayback();
-        
+
         const bpm = Number(localStorage.getItem("modelTempo"));
         const beatLength = 60 / bpm;
         const cycle = composition[cycleIndex];
-        
+
         playbackState.isPlaying = true;
         playbackState.startTime = audioCtx.currentTime;
         playbackState.currentCycle = cycleIndex;
-        
+
         // Schedule audio
         scheduleCycleAudio(cycle, cycleIndex, 0, beatLength);
-        
+
         // Start visual updates
         playbackState.animationFrame = requestAnimationFrame(() => updatePlaybackVisuals());
-        
+
         // Update play button text
         document.getElementById('playComposition').textContent = "⏹ Stop";
         showToast(`Playing cycle ${cycleIndex + 1}`, nBeats * beatLength * 1000);
@@ -582,7 +582,7 @@ export function page1script(p) {
         const bpm = Number(localStorage.getItem("modelTempo"));
         const beatLength = 60 / bpm;
         const cycleDuration = nBeats * beatLength;
-        
+
         playbackState.isPlaying = true;
         playbackState.startTime = audioCtx.currentTime;
         playbackState.currentCycle = 0;
@@ -595,13 +595,13 @@ export function page1script(p) {
 
         // Start visual updates
         playbackState.animationFrame = requestAnimationFrame(() => updatePlaybackVisuals());
-        
+
         // Update button
         this.textContent = "⏹ Stop";
-        
+
         const totalDuration = composition.length * cycleDuration;
         showToast(`Playing ${composition.length} cycles`, totalDuration * 1000);
-        
+
         // Auto-stop at end
         setTimeout(() => {
             if (playbackState.isPlaying) {
@@ -615,7 +615,7 @@ export function page1script(p) {
         cycle.markers.forEach(marker => {
             const playTime = playbackState.startTime + startOffset + (marker.beat * beatLength);
             const soundBuffer = buffers[marker.sound];
-            
+
             if (soundBuffer) {
                 const source = audioCtx.createBufferSource();
                 source.buffer = soundBuffer;
@@ -628,25 +628,25 @@ export function page1script(p) {
     // Update playback visuals (simplified)
     function updatePlaybackVisuals() {
         if (!playbackState.isPlaying || !playbackState.startTime) return;
-        
+
         const elapsed = audioCtx.currentTime - playbackState.startTime;
         const bpm = Number(localStorage.getItem("modelTempo"));
         const beatLength = 60 / bpm;
         const cycleDuration = nBeats * beatLength;
         const totalDuration = composition.length * cycleDuration;
-        
+
         // Update progress bars
         composition.forEach((cycle, cycleIndex) => {
             const cycleStart = cycleIndex * cycleDuration;
             const cycleEnd = cycleStart + cycleDuration;
             const progressBar = document.getElementById(`progress-${cycleIndex}`);
-            
+
             if (progressBar) {
                 if (elapsed >= cycleStart && elapsed <= cycleEnd) {
                     const cycleProgress = ((elapsed - cycleStart) / cycleDuration) * 100;
                     progressBar.style.width = `${cycleProgress}%`;
                     playbackState.currentCycle = cycleIndex;
-                    
+
                     // Highlight markers in current cycle
                     updateMarkerHighlights(cycle, cycleIndex, elapsed - cycleStart, beatLength);
                 } else if (elapsed > cycleEnd) {
@@ -656,10 +656,10 @@ export function page1script(p) {
                 }
             }
         });
-        
+
         // Clear highlights from other cycles
         clearAllHighlightsExcept(playbackState.currentCycle);
-        
+
         // Continue animation
         if (playbackState.isPlaying) {
             playbackState.animationFrame = requestAnimationFrame(() => updatePlaybackVisuals());
@@ -673,7 +673,7 @@ export function page1script(p) {
             if (markerEl) {
                 const markerTime = marker.beat * beatLength;
                 const timeDiff = Math.abs(elapsedInCycle - markerTime);
-                
+
                 // Highlight marker if we're within 0.1 seconds of it
                 if (timeDiff < 0.1) {
                     markerEl.classList.add('playing');
@@ -697,20 +697,20 @@ export function page1script(p) {
     // Stop playback
     function stopPlayback() {
         if (!playbackState.isPlaying) return;
-        
+
         playbackState.isPlaying = false;
         playbackState.startTime = null;
-        
+
         if (playbackState.animationFrame) {
             cancelAnimationFrame(playbackState.animationFrame);
             playbackState.animationFrame = null;
         }
-        
+
         // Clear all highlights
         document.querySelectorAll('.sound-marker').forEach(marker => {
             marker.classList.remove('playing');
         });
-        
+
         // Reset progress bars
         composition.forEach((_, cycleIndex) => {
             const progressBar = document.getElementById(`progress-${cycleIndex}`);
@@ -718,7 +718,7 @@ export function page1script(p) {
                 progressBar.style.width = '0%';
             }
         });
-        
+
         // Reset button
         document.getElementById('playComposition').textContent = "▶ Play All";
     }
@@ -751,6 +751,311 @@ export function page1script(p) {
         }
     });
 
-    // Initialize
+    // ===== ZOOM FUNCTIONALITY =====
+    const zoomModal = document.getElementById('zoomModal');
+    const zoomBtn = document.getElementById('zoomCanvas');
+    const closeZoomBtn = document.getElementById('closeZoomModal');
+    const zoomOverlay = document.getElementById('zoomOverlay');
+    const zoomCanvas = document.getElementById('zoomCircle');
+    const zoomCtx = zoomCanvas.getContext('2d');
+    const zoomRadius = 250;
+
+    let zoomMarkers = [];
+    let zoomSelectedSound = selectedSound;
+    let zoomStopLoop = null;
+    let zoomHoverBeat = null;
+
+    function createZoomSoundButtons() {
+        const zoomSoundButtons = document.getElementById('zoomSoundButtons');
+        zoomSoundButtons.innerHTML = '';
+
+        sounds.forEach((sound) => {
+            const button = document.createElement("button");
+            button.className = "zoom-sound-btn";
+            button.innerHTML = `
+            <div class="color-indicator" style="background-color: ${colors[sound]}"></div>
+            ${sound}
+        `;
+            button.addEventListener("click", () => {
+                zoomSelectedSound = sound;
+                document.getElementById("zoomCurrentSound").textContent = sound;
+
+                document.querySelectorAll(".zoom-sound-btn").forEach((btn) => {
+                    btn.classList.remove("active");
+                });
+                button.classList.add("active");
+
+                selectedSound = sound;
+                document.getElementById("currentSound").textContent = sound;
+
+                document.querySelectorAll(".sound-btn").forEach((btn, index) => {
+                    if (sounds[index] === sound) {
+                        btn.classList.add("active");
+                    } else {
+                        btn.classList.remove("active");
+                    }
+                });
+            });
+            zoomSoundButtons.appendChild(button);
+
+            if (sound === selectedSound) {
+                button.classList.add("active");
+            }
+        });
+    }
+
+    function initZoomView() {
+        zoomMarkers = JSON.parse(JSON.stringify(markers));
+
+        const snapSelect = document.getElementById('snapSelect');
+        const zoomSnapSelect = document.getElementById('zoomSnapSelect');
+        zoomSnapSelect.value = snapSelect.value;
+
+        zoomSelectedSound = selectedSound;
+        document.getElementById("zoomCurrentSound").textContent = selectedSound;
+
+        createZoomSoundButtons();
+
+        drawZoom();
+
+        setupZoomEvents();
+    }
+
+    function drawZoom() {
+        zoomCtx.clearRect(0, 0, zoomCanvas.width, zoomCanvas.height);
+        const cx = zoomCanvas.width / 2;
+        const cy = zoomCanvas.height / 2;
+
+        const styles = getComputedStyle(document.documentElement);
+        const circleColor = styles.getPropertyValue('--border-strong').trim() || '#34495e';
+        const tickColor = styles.getPropertyValue('--text').trim() || '#2c3e50';
+        const secondaryTickColor = styles.getPropertyValue('--error').trim() || 'red';
+        const markerBorder = styles.getPropertyValue('--border-strong').trim() || '#2c3e50';
+        const hoverColor = 'rgba(52, 152, 219, 0.3)';
+        const hoverBorder = 'rgba(52, 152, 219, 0.7)';
+
+        zoomCtx.beginPath();
+        zoomCtx.arc(cx, cy, zoomRadius, 0, 2 * Math.PI);
+        zoomCtx.strokeStyle = circleColor;
+        zoomCtx.lineWidth = 4;
+        zoomCtx.stroke();
+
+        zoomCtx.lineWidth = 1;
+        for (let i = 0; i < nBeats * 2; i++) {
+            const angle = beatToAngle(i / 2) - Math.PI / 2;
+            const x = cx + zoomRadius * Math.cos(angle);
+            const y = cy + zoomRadius * Math.sin(angle);
+            zoomCtx.moveTo(x, y);
+            zoomCtx.beginPath();
+
+            if (i % 2 === 0) {
+                zoomCtx.arc(x, y, 8, 0, 2 * Math.PI);
+                zoomCtx.strokeStyle = tickColor;
+                zoomCtx.fillStyle = tickColor;
+                zoomCtx.fill();
+            } else {
+                zoomCtx.arc(x, y, 5, 0, 2 * Math.PI);
+                zoomCtx.strokeStyle = secondaryTickColor;
+                zoomCtx.fillStyle = secondaryTickColor;
+                zoomCtx.fill();
+            }
+            zoomCtx.stroke();
+        }
+
+        zoomMarkers.forEach((m) => {
+            const angle = beatToAngle(m.beat) - Math.PI / 2;
+            const x = cx + zoomRadius * Math.cos(angle);
+            const y = cy + zoomRadius * Math.sin(angle);
+
+            zoomCtx.save();
+            zoomCtx.beginPath();
+
+            if (m.active) {
+                zoomCtx.shadowBlur = 20;
+                zoomCtx.shadowColor = colors[m.sound];
+                zoomCtx.fillStyle = colors[m.sound];
+                zoomCtx.arc(x, y, 15, 0, 2 * Math.PI);
+            } else {
+                zoomCtx.fillStyle = colors[m.sound];
+                zoomCtx.arc(x, y, 12, 0, 2 * Math.PI);
+            }
+
+            zoomCtx.fill();
+            zoomCtx.strokeStyle = markerBorder;
+            zoomCtx.lineWidth = 2;
+            zoomCtx.stroke();
+
+            zoomCtx.fillStyle = 'white';
+            zoomCtx.font = 'bold 10px Inter';
+            zoomCtx.textAlign = 'center';
+            zoomCtx.textBaseline = 'middle';
+            zoomCtx.fillText(symbolMap[m.sound], x, y);
+            zoomCtx.restore();
+        });
+
+        if (zoomHoverBeat !== null) {
+            const angle = beatToAngle(zoomHoverBeat) - Math.PI / 2;
+            const x = cx + zoomRadius * Math.cos(angle);
+            const y = cy + zoomRadius * Math.sin(angle);
+            zoomCtx.beginPath();
+            zoomCtx.arc(x, y, 10, 0, 2 * Math.PI);
+            zoomCtx.fillStyle = hoverColor;
+            zoomCtx.fill();
+            zoomCtx.strokeStyle = hoverBorder;
+            zoomCtx.lineWidth = 3;
+            zoomCtx.stroke();
+        }
+    }
+
+    function setupZoomEvents() {
+        zoomCanvas.addEventListener('click', (e) => {
+            const rect = zoomCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - zoomCanvas.width / 2;
+            const y = e.clientY - rect.top - zoomCanvas.height / 2;
+            const angle = Math.atan2(y, x) + Math.PI / 2;
+
+            const snapSelect = document.getElementById('zoomSnapSelect');
+            const snapValue = parseFloat(snapSelect.value);
+            let beat = angleToBeat(angle);
+            beat = Math.round(beat / snapValue) * snapValue;
+
+            let markerRemoved = false;
+            for (let i = 0; i < zoomMarkers.length; i++) {
+                if (Math.abs(zoomMarkers[i].beat - beat) < 0.01) {
+                    zoomMarkers.splice(i, 1);
+                    markerRemoved = true;
+                    break;
+                }
+            }
+
+            if (!markerRemoved) {
+                zoomMarkers.push({ beat, sound: zoomSelectedSound, active: false });
+            }
+
+            markers.length = 0;
+            markers.push(...JSON.parse(JSON.stringify(zoomMarkers)));
+
+            draw();
+            drawZoom();
+        });
+
+        zoomCanvas.addEventListener('mousemove', (e) => {
+            const rect = zoomCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left - zoomCanvas.width / 2;
+            const y = e.clientY - rect.top - zoomCanvas.height / 2;
+            const angle = Math.atan2(y, x) + Math.PI / 2;
+
+            const snapSelect = document.getElementById('zoomSnapSelect');
+            const snapValue = parseFloat(snapSelect.value);
+            let beat = angleToBeat(angle);
+            beat = Math.round(beat / snapValue) * snapValue;
+
+            zoomHoverBeat = beat;
+            drawZoom();
+        });
+
+        zoomCanvas.addEventListener('mouseleave', () => {
+            zoomHoverBeat = null;
+            drawZoom();
+        });
+
+        document.getElementById('zoomSnapSelect').addEventListener('change', function() {
+            document.getElementById('snapSelect').value = this.value;
+            draw();
+        });
+
+        document.getElementById('snapSelect').addEventListener('change', function() {
+            document.getElementById('zoomSnapSelect').value = this.value;
+            drawZoom();
+        });
+    }
+
+    zoomBtn.addEventListener('click', () => {
+        initZoomView();
+        zoomModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    });
+
+    closeZoomBtn.addEventListener('click', closeZoomModal);
+    zoomOverlay.addEventListener('click', closeZoomModal);
+
+    function closeZoomModal() {
+        zoomModal.classList.remove('active');
+        document.body.style.overflow = '';
+
+        markers.length = 0;
+        markers.push(...JSON.parse(JSON.stringify(zoomMarkers)));
+        draw();
+
+        if (zoomStopLoop) {
+            clearInterval(zoomStopLoop);
+            zoomStopLoop = null;
+            document.getElementById('playZoomSkeleton').textContent = "▶ Play Cycle";
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && zoomModal.classList.contains('active')) {
+            closeZoomModal();
+        }
+    });
+
+    document.getElementById('playZoomSkeleton').addEventListener('click', async function(e) {
+        if (audioCtx.state === "suspended") {
+            await audioCtx.resume();
+        }
+
+        if (!zoomStopLoop) {
+            if (Object.keys(buffers).length !== Object.keys(pathsMap).length) return;
+
+            const bpm = Number(localStorage.getItem("modelTempo"));
+            const cycleLength = Number(localStorage.getItem("modelCycleLength"));
+
+            const originalMarkers = [...markers];
+            markers = [...zoomMarkers];
+
+            zoomStopLoop = await playAudio(bpm, cycleLength, buffers);
+
+            markers = originalMarkers;
+
+            e.target.textContent = "⏹ Stop";
+        } else {
+            clearInterval(zoomStopLoop);
+            zoomStopLoop = null;
+            e.target.textContent = "▶ Play Cycle";
+        }
+    });
+
+    document.getElementById('clearZoomMarkers').addEventListener('click', () => {
+        if (zoomMarkers.length === 0) {
+            showToast("No markers to clear", 2000);
+            return;
+        }
+        if (zoomMarkers.length > 5 && !confirm(`Clear all ${zoomMarkers.length} markers?`)) return;
+
+        zoomMarkers.length = 0;
+        markers.length = 0;
+
+        if (zoomStopLoop) {
+            clearInterval(zoomStopLoop);
+            zoomStopLoop = null;
+            document.getElementById('playZoomSkeleton').textContent = "▶ Play Cycle";
+        }
+
+        if (stopLoop) {
+            clearInterval(stopLoop);
+            stopLoop = null;
+            document.getElementById('playSkeleton').textContent = "Play";
+        }
+
+        drawZoom();
+        draw();
+        showToast("Markers cleared", 2000);
+    });
+
+    window.addEventListener('load', () => {
+        createZoomSoundButtons();
+    });
+
     loadAllBuffers();
 }
