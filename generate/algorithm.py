@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 from config import get_audio_data
-from config_skeleton import get_audio_data_skeleton
+#from config_skeleton import get_audio_data_skeleton
 import soundfile as sf
 import random
 
@@ -115,7 +115,7 @@ def subdivisions_generator(
             tokens.append(f"AMP_{chosen_amplitude}")
             curr_sample += maxsubd_length_arr[index_of_curr_subd_in_beat]
         else:
-            hit_y_raw = np.asarray(get_audio_data(chosen_hit, sr), dtype=np.float32)
+            hit_y_raw = np.asarray(get_audio_data(chosen_hit), dtype=np.float32)
             add_len = min(len(hit_y_raw), remaining)
             hit_y = apply_cross_fade(hit_y_raw[:add_len])
             
@@ -201,7 +201,7 @@ def skeleton_generator(amplitude: float, skeleton: list[tuple[float, str]], num_
         tokens.append(f"DELAY_{beat_duration}")
         curr_hit = skeleton[i % skeleton_length][1]
         
-        y_hit_raw = np.asarray(get_audio_data(curr_hit, sr), dtype=np.float32)
+        y_hit_raw = np.asarray(get_audio_data(curr_hit), dtype=np.float32)
         y_hit = apply_cross_fade(y_hit_raw)
         tokens.append(f"HIT_{curr_hit}")
         

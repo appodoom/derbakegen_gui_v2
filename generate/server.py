@@ -10,10 +10,9 @@ import aioboto3
 import asyncio
 import jwt
 
+
 load_dotenv()
 from db.schema import init_models, AsyncSessionLocal, Sound
-
-
 
 app = Flask(__name__)
 CORS(app, resources={"*": {"origins": "*"}}, supports_credentials=True)
@@ -175,7 +174,7 @@ async def create_app():
 if __name__ == "__main__":
     import uvicorn
     from asgiref.wsgi import WsgiToAsgi
-    
+
     async def main():
         # Initialize database first
         await create_app()
