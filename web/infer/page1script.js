@@ -368,7 +368,7 @@ export function page1script(p) {
             if (zoomStopLoop) {
                 clearInterval(zoomStopLoop);
                 zoomStopLoop = null;
-                document.getElementById('playZoomSkeleton').textContent = "▶ Play Cycle";
+                document.getElementById('playZoomSkeleton').textContent = "Play Cycle";
             }
         } else {
             if (stopLoop) {
@@ -447,12 +447,6 @@ export function page1script(p) {
     }
 
     // ========== COMPOSITION MANAGEMENT ==========
-    function updateSheetStats() {
-        document.getElementById('cycleCount').textContent = `Cycles: ${composition.length}`;
-        const totalBeats = composition.length * nBeats;
-        document.getElementById('totalBeats').textContent = `Total Beats: ${totalBeats}`;
-    }
-
     function renderBeatGrid(totalBeats) {
         let gridHTML = '';
         for (let i = 0; i <= totalBeats; i++) {
@@ -626,7 +620,7 @@ export function page1script(p) {
             if (progressBar) progressBar.style.width = '0%';
         });
 
-        document.getElementById('playComposition').textContent = "▶ Play All";
+        document.getElementById('playComposition').textContent = "Play All";
     }
 
     window.deleteCycle = function(cycleIndex) {
@@ -634,7 +628,6 @@ export function page1script(p) {
         const cycleNumber = cycleIndex + 1;
         if (confirm(`Delete cycle ${cycleNumber}?`)) {
             composition.splice(cycleIndex, 1);
-            updateSheetStats();
             renderMusicSheet();
             showToast(`Cycle ${cycleNumber} deleted`, 2000);
         }
@@ -707,7 +700,7 @@ export function page1script(p) {
         if (zoomStopLoop) {
             clearInterval(zoomStopLoop);
             zoomStopLoop = null;
-            document.getElementById('playZoomSkeleton').textContent = "▶ Play Cycle";
+            document.getElementById('playZoomSkeleton').textContent = "Play Cycle";
         }
     }
 
@@ -756,11 +749,11 @@ export function page1script(p) {
                 const bpm = Number(localStorage.getItem("modelTempo"));
                 const cycleLength = Number(localStorage.getItem("modelCycleLength"));
                 zoomStopLoop = await playAudio(bpm, cycleLength, buffers, zoomMarkers, true);
-                e.target.textContent = "⏹ Stop";
+                e.target.textContent = "Stop";
             } else {
                 clearInterval(zoomStopLoop);
                 zoomStopLoop = null;
-                e.target.textContent = "▶ Play Cycle";
+                e.target.textContent = "Play Cycle";
             }
         });
 
@@ -784,7 +777,6 @@ export function page1script(p) {
                 createdAt: new Date().toISOString()
             });
 
-            updateSheetStats();
             renderMusicSheet();
             showToast(`Cycle ${composition.length} added to composition`, 2000);
         });
@@ -797,7 +789,6 @@ export function page1script(p) {
             if (confirm(`Clear entire composition (${composition.length} cycles)?`)) {
                 composition = [];
                 currentCycleId = 0;
-                updateSheetStats();
                 renderMusicSheet();
                 stopPlayback();
                 showToast("Composition cleared", 2000);
@@ -807,7 +798,7 @@ export function page1script(p) {
         document.getElementById('playComposition').addEventListener('click', async function() {
             if (playbackState.isPlaying) {
                 stopPlayback();
-                this.textContent = "▶ Play All";
+                this.textContent = "Play All";
                 return;
             }
 
@@ -832,7 +823,7 @@ export function page1script(p) {
             });
 
             playbackState.animationFrame = requestAnimationFrame(updatePlaybackVisuals);
-            this.textContent = "⏹ Stop";
+            this.textContent = "Stop";
 
             const totalDuration = composition.length * cycleDuration;
             showToast(`Playing ${composition.length} cycles`, totalDuration * 1000);
@@ -888,6 +879,108 @@ export function page1script(p) {
         window.addEventListener('load', () => {
             createSoundButtons('zoomSoundButtons', true);
         });
+    }
+
+    const tabs = document.querySelectorAll(".tab-btn");
+    const contents = document.querySelectorAll(".tab-content");
+    const compositionTab = document.getElementById("composition-tab-btn");
+    const chatTab = document.getElementById("chat-tab-btn");
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            // Remove active from all buttons
+            tabs.forEach(t => t.classList.remove("active"));
+            tab.classList.add("active");
+
+            // Show selected tab
+            contents.forEach(c => c.style.display = "none");
+            document.getElementById(tab.dataset.tab + "-tab").style.display = "flex";
+        });
+    });
+
+    document.getElementById("composeNewInputButton").addEventListener("click", () => {
+        compositionTab.click();
+    })
+
+    document.getElementById("sendInput").addEventListener("click", async () => {
+        if (composition.length === 0) {
+            showToast("Input is empty", 2000);
+            return;
+        }
+        const comp = composition;
+        composition = [];
+        currentCycleId = 0;
+        renderMusicSheet();
+        stopPlayback();
+        document.getElementById("sendInput").textContent = "Loading...";
+        document.getElementById("sendInput").disabled = true;
+        const tokens = getTokens(comp);
+        //const res = await fetch("http://localhost:");
+        console.log(tokens);
+        chatTab.click();
+    })
+
+    function getTokens(comp) {
+        let arr = [];
+        for (const co of comp) {
+            let topush = [];
+            for (const ma of co.markers) {
+                topush.push({ "beat": ma.beat, "sound": ma.sound });
+            }
+            arr.push(topush);
+        }
+        const symbols = {
+            "Doom": "D",
+            "Open Tak": "OTA",
+            "Open Tik": "OTI",
+            "Silence": "S",
+            "Pa2": "PA2"
+        }
+        const tokens = [];
+        let temp = [];
+        let acc = 0;
+        for (const cycle of arr) {
+            tokens.push("<SOC>");
+            temp = [];
+            for (const hit of cycle) {
+                temp.push([hit.beat, hit.sound]);
+            }
+            temp.sort((a, b) => a[0] - b[0]);
+            for (let i = 0; i < nBeats; i++) {
+                tokens.push("<SOB>");
+                let hitsInBeat = [];
+                for (const hit of temp) {
+                    if (hit[0] < i + 1 && hit[0] >= i) {
+                        hitsInBeat.push(hit);
+                    }
+                }
+                let minDelta = 10000;
+                if (hitsInBeat.length > 1) {
+                    for (let k = 0; k < hitsInBeat.length - 1; k++) {
+                        minDelta = Math.min(minDelta, hitsInBeat[k + 1][0] - hitsInBeat[k][0]);
+                    }
+                }
+                if (hitsInBeat.length === 1) {
+                    minDelta = hitsInBeat[0][0] - i;
+                }
+                let subd = (minDelta === 10000 || minDelta === 0) ? 4 : 1 / minDelta;
+                tokens.push("SUBD_" + subd);
+                for (let l = 0; l < subd; l++) {
+                    let found = false;
+                    tokens.push("POS_" + l);
+                    const current = i + (1 / subd) * l;
+                    for (const h of hitsInBeat) {
+                        if (h[0] === current) {
+                            tokens.push("HIT_" + symbols[h[1]]);
+                            found = true;
+                        }
+                    }
+                    if (!found) tokens.push("HIT_S")
+                }
+                tokens.push("<EOB>");
+            }
+            tokens.push("<EOC>");
+        }
+        return tokens;
     }
 
     init();

@@ -649,7 +649,8 @@ body {
 }
 
 /* Music Sheet Area */
-.music-sheet {
+.music-sheet,
+.chat-messages {
     flex: 1;
     overflow-y: auto;
     border: 1px solid var(--border);
@@ -1583,4 +1584,76 @@ body {
 [data-theme="dark"] .zoom-btn:hover {
     background: var(--primary);
     border-color: var(--primary);
+}
+
+/* Tab headers */
+.tab-header {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-md);
+}
+
+.tab-btn {
+    flex: 1;
+    background: var(--surface);
+    border: none;
+    padding: var(--space-sm) var(--space-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-ligh);
+}
+
+.tab-btn.active {
+    border-bottom: 3px solid var(--primary);
+    color: var(--primary);
+}
+
+.tab-btn:hover:not(.active) {
+    background: var(--accent);
+}
+
+/* Tab content */
+.tab-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* ===== Send to Model Button (in composition tab) ===== */
+#sendToModel {
+    background: #059669;
+    /* success green */
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    font-weight: 600;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+}
+
+#sendToModel:hover {
+    background: color-mix(in srgb, #059669 80%, black);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ===== Chat Tab - Replace input with button ===== */
+.chat-controls {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+#editComposition {
+    min-width: 160px;
+}
+
+/* Optional: Make WAV messages look nice */
+.chat-messages audio {
+    display: block;
+    margin: var(--space-sm) 0;
 }

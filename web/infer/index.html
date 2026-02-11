@@ -103,26 +103,53 @@
             </div>
             <!-- RIGHT PANEL: Music Sheet -->
             <div class="sheet-panel">
-                <div class="sheet-header">
-                    <h3>Composition</h3>
-                    <div class="sheet-controls">
-                        <button id="playComposition" class="primary-btn">▶ Play All</button>
-                        <button id="clearComposition" class="secondary-btn">Clear Sheet</button>
+                <div class="tab-header">
+                    <button class="tab-btn active" data-tab="composition" id="composition-tab-btn">Composition</button>
+                    <button class="tab-btn" data-tab="chat" id="chat-tab-btn">Chat</button>
+                </div>
+                <!-- Tab contents -->
+                <div class="tab-content" id="composition-tab">
+                    <div class="music-sheet" id="musicSheet">
+                        <!-- Music sheet will be rendered here -->
+                        <div class="empty-sheet">
+                            <div class="empty-message">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                                </svg>
+                                <p>No cycles added yet</p>
+                                <small>Click "Add to input" to add your first cycle</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <div class="action-buttons">
+                            <button id="playComposition" class="primary-btn">Play All</button>
+                            <button id="sendInput" class="primary-btn">Send to model</button>
+                        </div>
+                        <div class="control-buttons">
+                            <button id="clearComposition" class="secondary-btn">Clear Sheet</button>
+                        </div>
                     </div>
                 </div>
-                <div class="sheet-stats">
-                    <span id="cycleCount">Cycles: 0</span>
-                    <span id="totalBeats">Total Beats: 0</span>
-                </div>
-                <div class="music-sheet" id="musicSheet">
-                    <!-- Music sheet will be rendered here -->
-                    <div class="empty-sheet">
-                        <div class="empty-message">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-                            </svg>
-                            <p>No cycles added yet</p>
-                            <small>Click "Append Cycle" to add your first cycle</small>
+                <div class="tab-content" id="chat-tab" style="display: none;">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="empty-sheet">
+                            <div class="empty-message">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                                </svg>
+                                <p>Chat is empty</p>
+                                <small>Start the conversation by sending a composition</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <div class="action-buttons">
+                            <button id="composeNewInputButton" class="primary-btn">Compose new input</button>
+                            <button class="primary-btn">Export chat</button>
+                        </div>
+                        <div class="control-buttons">
+                            <button class="secondary-btn">Delete chat</button>
                         </div>
                     </div>
                 </div>
@@ -159,7 +186,7 @@
                         </div>
                     </div>
                     <div class="zoom-actions-panel">
-                        <button class="btn primary-btn" id="playZoomSkeleton">▶ Play Cycle</button>
+                        <button class="btn primary-btn" id="playZoomSkeleton">Play Cycle</button>
                         <button class="btn secondary-btn" id="clearZoomMarkers">Clear Markers</button>
                         <div class="zoom-snap">
                             <label for="zoomSnapSelect">Snap to:</label>
